@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../models/movie.dart';
 import '../services/tmdb_service.dart';
 import '../utils/constants.dart';
@@ -78,11 +79,14 @@ class _MovieCardState extends State<MovieCard> {
                   _isLoading
                       ? const Center(child: SimplePlaceholder())
                       : _posterUrl != null && _posterUrl!.isNotEmpty
-                      ? Image.network(
-                        _posterUrl!,
+                      ? CachedNetworkImage(
+                        imageUrl: _posterUrl!,
                         fit: BoxFit.cover,
-                        errorBuilder:
-                            (_, __, ___) => const Center(
+                        placeholder:
+                            (context, url) =>
+                                const Center(child: SimplePlaceholder()),
+                        errorWidget:
+                            (context, url, error) => const Center(
                               child: Icon(
                                 AppIcons.movies,
                                 size: 40,

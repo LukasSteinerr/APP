@@ -9,12 +9,12 @@ class CategoryList extends StatelessWidget {
   final bool showAllOption;
   
   const CategoryList({
-    Key? key,
+    super.key,
     required this.categories,
     this.selectedCategoryId,
     required this.onCategorySelected,
     this.showAllOption = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

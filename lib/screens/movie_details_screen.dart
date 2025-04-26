@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../models/movie.dart';
 import '../providers/content_provider.dart';
 import '../services/tmdb_service.dart';
@@ -117,11 +118,18 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
       flexibleSpace: FlexibleSpaceBar(
         background:
             _backdropUrl != null && _backdropUrl!.isNotEmpty
-                ? Image.network(
-                  _backdropUrl!,
+                ? CachedNetworkImage(
+                  imageUrl: _backdropUrl!,
                   fit: BoxFit.cover,
-                  errorBuilder:
-                      (_, __, ___) => Container(
+                  placeholder:
+                      (context, url) => Container(
+                        color: AppColors.primaryDark,
+                        child: const Center(
+                          child: SimplePlaceholder(width: 100, height: 100),
+                        ),
+                      ),
+                  errorWidget:
+                      (context, url, error) => Container(
                         color: AppColors.primaryDark,
                         child: const Center(
                           child: Icon(
@@ -161,11 +169,21 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
               height: 180,
               child:
                   _posterUrl != null && _posterUrl!.isNotEmpty
-                      ? Image.network(
-                        _posterUrl!,
+                      ? CachedNetworkImage(
+                        imageUrl: _posterUrl!,
                         fit: BoxFit.cover,
-                        errorBuilder:
-                            (_, __, ___) => Container(
+                        placeholder:
+                            (context, url) => Container(
+                              color: AppColors.card,
+                              child: const Center(
+                                child: SimplePlaceholder(
+                                  width: 80,
+                                  height: 120,
+                                ),
+                              ),
+                            ),
+                        errorWidget:
+                            (context, url, error) => Container(
                               color: AppColors.card,
                               child: const Center(
                                 child: Icon(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../models/category.dart';
 import '../models/channel.dart';
 import '../providers/content_provider.dart';
@@ -7,6 +8,7 @@ import '../utils/constants.dart';
 import '../widgets/category_list.dart';
 import '../widgets/error_display.dart';
 import '../widgets/loading_indicator.dart';
+import '../widgets/simple_placeholder.dart';
 import 'player_screen.dart';
 
 class LiveTVScreen extends StatefulWidget {
@@ -176,11 +178,14 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
             Expanded(
               child:
                   channel.streamIcon.isNotEmpty
-                      ? Image.network(
-                        channel.streamIcon,
+                      ? CachedNetworkImage(
+                        imageUrl: channel.streamIcon,
                         fit: BoxFit.cover,
-                        errorBuilder:
-                            (_, __, ___) => const Center(
+                        placeholder:
+                            (context, url) =>
+                                const Center(child: SimplePlaceholder()),
+                        errorWidget:
+                            (context, url, error) => const Center(
                               child: Icon(
                                 AppIcons.live,
                                 size: 40,

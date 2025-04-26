@@ -7,7 +7,7 @@ import 'movies_screen.dart';
 import 'tv_shows_screen.dart';
 
 class ContentScreen extends StatefulWidget {
-  const ContentScreen({Key? key}) : super(key: key);
+  const ContentScreen({super.key});
 
   @override
   State<ContentScreen> createState() => _ContentScreenState();

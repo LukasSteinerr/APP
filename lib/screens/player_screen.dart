@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../utils/constants.dart';
 import '../widgets/error_display.dart';
 import '../widgets/loading_indicator.dart';
@@ -88,11 +89,18 @@ class _PlayerScreenState extends State<PlayerScreen> {
         showControls: true,
         placeholder:
             widget.posterUrl != null && widget.posterUrl!.isNotEmpty
-                ? Image.network(
-                  widget.posterUrl!,
+                ? CachedNetworkImage(
+                  imageUrl: widget.posterUrl!,
                   fit: BoxFit.contain,
-                  errorBuilder:
-                      (_, __, ___) => Container(
+                  placeholder:
+                      (context, url) => Container(
+                        color: Colors.black,
+                        child: const Center(
+                          child: SimplePlaceholder(width: 80, height: 80),
+                        ),
+                      ),
+                  errorWidget:
+                      (context, url, error) => Container(
                         color: Colors.black,
                         child: const Center(
                           child: SimplePlaceholder(width: 80, height: 80),

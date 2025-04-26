@@ -9,12 +9,12 @@ class ConnectionCard extends StatelessWidget {
   final VoidCallback onDelete;
   
   const ConnectionCard({
-    Key? key,
+    super.key,
     required this.connection,
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

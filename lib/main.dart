@@ -5,8 +5,10 @@ import 'providers/connections_provider.dart';
 import 'providers/content_provider.dart';
 import 'screens/home_screen.dart';
 import 'utils/constants.dart';
+import 'services/hive_service.dart';
+import 'services/image_service.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Set preferred orientations
@@ -16,6 +18,12 @@ void main() {
     DeviceOrientation.landscapeLeft,
     DeviceOrientation.landscapeRight,
   ]);
+
+  // Initialize Hive
+  await HiveService.init();
+
+  // Optimize image cache settings
+  ImageService.optimizeCacheSettings();
 
   runApp(const MyApp());
 }

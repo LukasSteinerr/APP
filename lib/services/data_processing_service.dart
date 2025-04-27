@@ -89,6 +89,48 @@ class DataProcessingService {
     sortedList.sort((a, b) => a.name.compareTo(b.name));
     return sortedList;
   }
+
+  /// Chunk a list into smaller lists for better performance
+  static Future<List<List<T>>> chunkList<T>(List<T> list, int chunkSize) async {
+    return await ComputeService.compute<_ChunkParams<T>, List<List<T>>>(
+      _chunkListIsolate,
+      _ChunkParams<T>(list: list, chunkSize: chunkSize),
+    );
+  }
+
+  /// Chunk list implementation for isolate
+  static List<List<T>> _chunkListIsolate<T>(_ChunkParams<T> params) {
+    final List<List<T>> chunks = [];
+    final List<T> list = params.list;
+    final int chunkSize = params.chunkSize;
+
+    for (var i = 0; i < list.length; i += chunkSize) {
+      final end = (i + chunkSize < list.length) ? i + chunkSize : list.length;
+      chunks.add(list.sublist(i, end));
+    }
+
+    return chunks;
+  }
+
+  /// Process data in chunks to avoid UI jank
+  static Future<void> processInChunks<T>({
+    required List<T> items,
+    required Function(List<T> chunk) processor,
+    int chunkSize = 50,
+    int delayMillis = 16, // ~1 frame at 60fps
+  }) async {
+    // Split into chunks
+    final chunks = await chunkList<T>(items, chunkSize);
+
+    // Process each chunk with a delay between them
+    for (final chunk in chunks) {
+      // Process the chunk
+      processor(chunk);
+
+      // Add a small delay to allow UI to update
+      await Future.delayed(Duration(milliseconds: delayMillis));
+    }
+  }
 }
 
 /// Parameter class for filtering channels
@@ -113,4 +155,12 @@ class _FilterSeriesParams {
   final String query;
 
   _FilterSeriesParams({required this.seriesList, required this.query});
+}
+
+/// Parameter class for chunking lists
+class _ChunkParams<T> {
+  final List<T> list;
+  final int chunkSize;
+
+  _ChunkParams({required this.list, required this.chunkSize});
 }

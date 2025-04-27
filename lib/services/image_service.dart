@@ -1,6 +1,9 @@
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/painting.dart';
 import 'package:http/http.dart' as http;
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import '../services/compute_service.dart';
 
 /// A service for handling image-related operations in isolates
@@ -39,19 +42,67 @@ class ImageService {
   static Future<void> prefetchImages(List<String> imageUrls) async {
     try {
       // Process in batches to avoid overloading the device
-      const int batchSize = 5;
-      
+      const int batchSize = 3; // Reduced batch size to lower memory pressure
+
       for (int i = 0; i < imageUrls.length; i += batchSize) {
-        final end = (i + batchSize < imageUrls.length) ? i + batchSize : imageUrls.length;
+        final end =
+            (i + batchSize < imageUrls.length)
+                ? i + batchSize
+                : imageUrls.length;
         final batch = imageUrls.sublist(i, end);
-        
+
         // Process batch in parallel
-        await Future.wait(
-          batch.map((url) => prefetchImage(url)),
-        );
+        await Future.wait(batch.map((url) => prefetchImage(url)));
+
+        // Add a small delay between batches to avoid UI jank
+        await Future.delayed(const Duration(milliseconds: 50));
       }
     } catch (e) {
       debugPrint('Error batch prefetching images: $e');
+    }
+  }
+
+  /// Optimize CachedNetworkImage settings
+  static void optimizeCacheSettings() {
+    try {
+      // Set global cache settings for CachedNetworkImage
+      final cache = PaintingBinding.instance.imageCache;
+      cache.maximumSizeBytes = 100 * 1024 * 1024; // 100 MB
+
+      // Clear the cache if it's getting too large
+      if (cache.currentSizeBytes > 80 * 1024 * 1024) {
+        debugPrint('IMAGE SERVICE: Clearing image cache to free memory');
+        cache.clear();
+        cache.clearLiveImages();
+      }
+    } catch (e) {
+      debugPrint('Error optimizing cache settings: $e');
+    }
+  }
+
+  /// Evict an image from cache
+  static void evictImage(String imageUrl) {
+    try {
+      CachedNetworkImage.evictFromCache(imageUrl);
+    } catch (e) {
+      debugPrint('Error evicting image from cache: $e');
+    }
+  }
+
+  /// Clear all cached images
+  static void clearCache() {
+    try {
+      // Clear Flutter's image cache
+      final cache = PaintingBinding.instance.imageCache;
+      cache.clear();
+      cache.clearLiveImages();
+
+      // Clear CachedNetworkImage cache
+      DefaultCacheManager().emptyCache();
+
+      debugPrint('IMAGE SERVICE: Image cache cleared');
+    } catch (e) {
+      debugPrint('Error clearing image cache: $e');
     }
   }
 }

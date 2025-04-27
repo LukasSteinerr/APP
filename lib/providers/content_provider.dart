@@ -6,6 +6,7 @@ import '../models/xtream_connection.dart';
 import '../services/xtream_service.dart';
 import '../models/category.dart';
 import '../services/data_preloader_service.dart';
+import '../services/hive_service.dart';
 
 class ContentProvider with ChangeNotifier {
   XtreamConnection? _currentConnection;
@@ -54,7 +55,55 @@ class ContentProvider with ChangeNotifier {
       password: connection.password,
     );
     _preloaderService = DataPreloaderService(_xtreamService!);
+
+    // Check if we have cached data for this connection
+    _checkForCachedData(connection.id);
+
     notifyListeners();
+  }
+
+  // Check for cached data in Hive
+  void _checkForCachedData(String connectionId) {
+    debugPrint(
+      'CONTENT PROVIDER: Checking for cached data for connection $connectionId',
+    );
+
+    // Check if we have preloaded data flag
+    final hasPreloadedData = HiveService.hasPreloadedData();
+    final cachedConnectionId = HiveService.getConnectionId();
+
+    if (hasPreloadedData && cachedConnectionId == connectionId) {
+      debugPrint(
+        'CONTENT PROVIDER: Found cached data for connection $connectionId',
+      );
+
+      // Load data from Hive
+      _vodCategories = HiveService.getVodCategories().cast<Category>();
+      _seriesCategories = HiveService.getSeriesCategories().cast<Category>();
+      _liveCategories = HiveService.getLiveCategories().cast<Category>();
+      _movies = HiveService.getMovies().cast<Movie>();
+      _seriesList = HiveService.getSeries().cast<Series>();
+      _liveChannels = HiveService.getChannels().cast<Channel>();
+
+      _hasPreloadedData = true;
+
+      debugPrint('CONTENT PROVIDER: Loaded cached data:');
+      debugPrint('CONTENT PROVIDER: VOD Categories: ${_vodCategories.length}');
+      debugPrint(
+        'CONTENT PROVIDER: Series Categories: ${_seriesCategories.length}',
+      );
+      debugPrint(
+        'CONTENT PROVIDER: Live Categories: ${_liveCategories.length}',
+      );
+      debugPrint('CONTENT PROVIDER: Movies: ${_movies.length}');
+      debugPrint('CONTENT PROVIDER: Series: ${_seriesList.length}');
+      debugPrint('CONTENT PROVIDER: Channels: ${_liveChannels.length}');
+    } else {
+      debugPrint(
+        'CONTENT PROVIDER: No cached data found for connection $connectionId',
+      );
+      _hasPreloadedData = false;
+    }
   }
 
   // Preload all data for the current connection
@@ -106,6 +155,29 @@ class ContentProvider with ChangeNotifier {
       debugPrint('CONTENT PROVIDER: Setting hasPreloadedData to true');
       _hasPreloadedData = true;
       _isPreloading = false;
+
+      // Save data to Hive
+      debugPrint('CONTENT PROVIDER: Saving preloaded data to Hive');
+      if (_currentConnection != null) {
+        await HiveService.saveVodCategories(
+          _vodCategories,
+          _currentConnection!.id,
+        );
+        await HiveService.saveSeriesCategories(
+          _seriesCategories,
+          _currentConnection!.id,
+        );
+        await HiveService.saveLiveCategories(
+          _liveCategories,
+          _currentConnection!.id,
+        );
+        await HiveService.saveMovies(_movies, _currentConnection!.id);
+        await HiveService.saveSeries(_seriesList, _currentConnection!.id);
+        await HiveService.saveChannels(_liveChannels, _currentConnection!.id);
+        await HiveService.setPreloadedDataFlag(true);
+        debugPrint('CONTENT PROVIDER: Data saved to Hive successfully');
+      }
+
       notifyListeners();
 
       debugPrint('CONTENT PROVIDER: preloadAllData completed successfully');
@@ -124,7 +196,7 @@ class ContentProvider with ChangeNotifier {
   }
 
   // Clear current connection
-  void clearConnection() {
+  Future<void> clearConnection() async {
     _currentConnection = null;
     _xtreamService = null;
     _preloaderService = null;
@@ -135,6 +207,11 @@ class ContentProvider with ChangeNotifier {
     _seriesCategories = [];
     _seriesList = [];
     _hasPreloadedData = false;
+
+    // Clear Hive data
+    debugPrint('CONTENT PROVIDER: Clearing Hive data');
+    await HiveService.clearAllData();
+
     notifyListeners();
   }
 

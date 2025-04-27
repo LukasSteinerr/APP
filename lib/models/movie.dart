@@ -1,17 +1,49 @@
+import 'package:hive/hive.dart';
+
+part 'movie.g.dart';
+
+@HiveType(typeId: 2)
 class Movie {
+  @HiveField(0)
   final String streamId;
+
+  @HiveField(1)
   final String name;
+
+  @HiveField(2)
   final String streamIcon;
+
+  @HiveField(3)
   final String containerExtension;
+
+  @HiveField(4)
   final String categoryId;
+
+  @HiveField(5)
   final String? rating;
+
+  @HiveField(6)
   final String? plot;
+
+  @HiveField(7)
   final String? releaseDate;
+
+  @HiveField(8)
   final String? director;
+
+  @HiveField(9)
   final String? actors;
+
+  @HiveField(10)
   final String? backdropPath;
+
+  @HiveField(11)
   final String? youtubeTrailer;
+
+  @HiveField(12)
   final String? tmdbId;
+
+  @HiveField(13)
   final String? year;
 
   Movie({
@@ -49,4 +81,21 @@ class Movie {
       year: json['year']?.toString(),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'stream_id': streamId,
+    'name': name,
+    'stream_icon': streamIcon,
+    'container_extension': containerExtension,
+    'category_id': categoryId,
+    'rating': rating,
+    'plot': plot,
+    'releasedate': releaseDate,
+    'director': director,
+    'cast': actors,
+    'backdrop_path': backdropPath,
+    'youtube_trailer': youtubeTrailer,
+    'tmdb_id': tmdbId,
+    'year': year,
+  };
 }

@@ -1,15 +1,43 @@
+import 'package:hive/hive.dart';
+
+part 'series.g.dart';
+
+@HiveType(typeId: 3)
 class Series {
+  @HiveField(0)
   final String seriesId;
+
+  @HiveField(1)
   final String name;
+
+  @HiveField(2)
   final String cover;
+
+  @HiveField(3)
   final String plot;
+
+  @HiveField(4)
   final String cast;
+
+  @HiveField(5)
   final String director;
+
+  @HiveField(6)
   final String genre;
+
+  @HiveField(7)
   final String releaseDate;
+
+  @HiveField(8)
   final String rating;
+
+  @HiveField(9)
   final String categoryId;
+
+  @HiveField(10)
   final String? tmdbId;
+
+  @HiveField(11)
   final String? backdropPath;
 
   Series({
@@ -52,6 +80,21 @@ class Series {
           json['backdrop_path'] is String ? json['backdrop_path'] : null,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'series_id': seriesId,
+    'name': name,
+    'cover': cover,
+    'plot': plot,
+    'cast': cast,
+    'director': director,
+    'genre': genre,
+    'releaseDate': releaseDate,
+    'rating': rating,
+    'category_id': categoryId,
+    'tmdb_id': tmdbId,
+    'backdrop_path': backdropPath,
+  };
 }
 
 class Season {

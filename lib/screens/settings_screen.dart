@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/content_provider.dart';
 import '../utils/constants.dart';
 import 'database_test_screen.dart';
+import 'hive_debug_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -14,10 +15,7 @@ class SettingsScreen extends StatelessWidget {
 
     if (connection == null) {
       return const Center(
-        child: Text(
-          'No active connection',
-          style: AppTextStyles.headline2,
-        ),
+        child: Text('No active connection', style: AppTextStyles.headline2),
       );
     }
 
@@ -54,9 +52,9 @@ class SettingsScreen extends StatelessWidget {
               value: _formatDate(connection.addedDate),
               icon: Icons.calendar_today,
             ),
-            
+
             const SizedBox(height: AppPaddings.large),
-            
+
             // App Settings Section
             _buildSectionHeader(context, 'App Settings'),
             _buildSettingItem(
@@ -74,15 +72,28 @@ class SettingsScreen extends StatelessWidget {
             ),
             _buildSettingItem(
               context,
+              title: 'Hive Database Debug',
+              icon: Icons.data_array,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const HiveDebugScreen(),
+                  ),
+                );
+              },
+            ),
+            _buildSettingItem(
+              context,
               title: 'Clear Cache',
               icon: Icons.cleaning_services,
               onTap: () {
                 _showClearCacheDialog(context);
               },
             ),
-            
+
             const SizedBox(height: AppPaddings.large),
-            
+
             // App Info Section
             _buildSectionHeader(context, 'App Info'),
             _buildInfoCard(
@@ -105,9 +116,7 @@ class SettingsScreen extends StatelessWidget {
       ),
       child: Text(
         title,
-        style: AppTextStyles.headline3.copyWith(
-          color: AppColors.accent,
-        ),
+        style: AppTextStyles.headline3.copyWith(color: AppColors.accent),
       ),
     );
   }
@@ -124,10 +133,7 @@ class SettingsScreen extends StatelessWidget {
         padding: const EdgeInsets.all(AppPaddings.medium),
         child: Row(
           children: [
-            Icon(
-              icon,
-              color: AppColors.accent,
-            ),
+            Icon(icon, color: AppColors.accent),
             const SizedBox(width: AppPaddings.medium),
             Expanded(
               child: Column(
@@ -140,10 +146,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    value,
-                    style: AppTextStyles.body1,
-                  ),
+                  Text(value, style: AppTextStyles.body1),
                 ],
               ),
             ),
@@ -168,17 +171,9 @@ class SettingsScreen extends StatelessWidget {
           padding: const EdgeInsets.all(AppPaddings.medium),
           child: Row(
             children: [
-              Icon(
-                icon,
-                color: AppColors.accent,
-              ),
+              Icon(icon, color: AppColors.accent),
               const SizedBox(width: AppPaddings.medium),
-              Expanded(
-                child: Text(
-                  title,
-                  style: AppTextStyles.body1,
-                ),
-              ),
+              Expanded(child: Text(title, style: AppTextStyles.body1)),
               const Icon(
                 Icons.arrow_forward_ios,
                 size: 16,
@@ -198,28 +193,45 @@ class SettingsScreen extends StatelessWidget {
   void _showClearCacheDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Clear Cache'),
-        content: const Text('Are you sure you want to clear the app cache?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Clear Cache'),
+            content: const Text(
+              'Are you sure you want to clear the app cache? This will clear all preloaded data.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final contentProvider = Provider.of<ContentProvider>(
+                    context,
+                    listen: false,
+                  );
+
+                  // Clear Hive data but keep the connection
+                  final connection = contentProvider.currentConnection;
+                  await contentProvider.clearConnection();
+
+                  if (connection != null) {
+                    contentProvider.setConnection(connection);
+                  }
+
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Cache cleared successfully'),
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Clear'),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () {
-              // TODO: Implement cache clearing
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Cache cleared successfully'),
-                ),
-              );
-            },
-            child: const Text('Clear'),
-          ),
-        ],
-      ),
     );
   }
 }

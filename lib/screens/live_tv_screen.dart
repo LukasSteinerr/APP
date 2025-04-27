@@ -35,6 +35,9 @@ class _LiveTVScreenState extends State<LiveTVScreen>
     super.initState();
     debugPrint('LIVE TV SCREEN: Initializing');
 
+    // Optimize image cache settings
+    ImageService.optimizeCacheSettings();
+
     // Use addPostFrameCallback to ensure the widget is fully built before updating state
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Skip if we've already loaded data
@@ -234,8 +237,12 @@ class _LiveTVScreenState extends State<LiveTVScreen>
                           crossAxisSpacing: AppPaddings.medium,
                           mainAxisSpacing: AppPaddings.medium,
                         ),
+                    // Use caching for better performance
+                    cacheExtent: 500, // Cache more items for smoother scrolling
+                    addAutomaticKeepAlives: true,
                     itemCount: channels.length,
                     itemBuilder: (context, index) {
+                      // Only build channel cards that are visible or about to be visible
                       final channel = channels[index];
                       return _buildChannelCard(context, channel, provider);
                     },
@@ -254,55 +261,63 @@ class _LiveTVScreenState extends State<LiveTVScreen>
     Channel channel,
     ContentProvider provider,
   ) {
-    return Card(
-      color: AppColors.card,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppBorderRadius.medium),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => _openChannel(context, channel, provider),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child:
-                  channel.streamIcon.isNotEmpty
-                      ? CachedNetworkImage(
-                        imageUrl: channel.streamIcon,
-                        fit: BoxFit.cover,
-                        placeholder:
-                            (context, url) =>
-                                const Center(child: SimplePlaceholder()),
-                        errorWidget:
-                            (context, url, error) => const Center(
-                              child: Icon(
-                                AppIcons.live,
-                                size: 40,
-                                color: AppColors.primary,
+    // Use RepaintBoundary to isolate repainting
+    return RepaintBoundary(
+      child: Card(
+        color: AppColors.card,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppBorderRadius.medium),
+        ),
+        clipBehavior: Clip.antiAlias,
+        elevation: 2, // Reduced elevation for better performance
+        child: InkWell(
+          onTap: () => _openChannel(context, channel, provider),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child:
+                    channel.streamIcon.isNotEmpty
+                        ? CachedNetworkImage(
+                          imageUrl: channel.streamIcon,
+                          fit: BoxFit.cover,
+                          // Improved caching settings
+                          memCacheWidth: 200, // Limit memory cache size
+                          memCacheHeight: 120,
+                          fadeInDuration: const Duration(milliseconds: 200),
+                          placeholder:
+                              (context, url) =>
+                                  const Center(child: SimplePlaceholder()),
+                          errorWidget:
+                              (context, url, error) => const Center(
+                                child: Icon(
+                                  AppIcons.live,
+                                  size: 40,
+                                  color: AppColors.primary,
+                                ),
                               ),
-                            ),
-                      )
-                      : const Center(
-                        child: Icon(
-                          AppIcons.live,
-                          size: 40,
-                          color: AppColors.primary,
+                        )
+                        : const Center(
+                          child: Icon(
+                            AppIcons.live,
+                            size: 40,
+                            color: AppColors.primary,
+                          ),
                         ),
-                      ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(AppPaddings.small),
-              color: AppColors.card,
-              child: Text(
-                channel.name,
-                style: AppTextStyles.body1,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
               ),
-            ),
-          ],
+              Container(
+                padding: const EdgeInsets.all(AppPaddings.small),
+                color: AppColors.card,
+                child: Text(
+                  channel.name,
+                  style: AppTextStyles.body1,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -327,16 +342,22 @@ class _LiveTVScreenState extends State<LiveTVScreen>
 
   // Prefetch channel icons in the background using isolates
   void _prefetchChannelIcons(List<Channel> channels) {
+    // Only prefetch a limited number of images to avoid memory issues
+    final visibleChannels = channels.take(20).toList();
+
     // Extract icon URLs
     final iconUrls =
-        channels
+        visibleChannels
             .where((channel) => channel.streamIcon.isNotEmpty)
             .map((channel) => channel.streamIcon)
             .toList();
 
     // Prefetch in background
     if (iconUrls.isNotEmpty) {
-      ImageService.prefetchImages(iconUrls);
+      // Use a microtask to avoid blocking the UI
+      Future.microtask(() {
+        ImageService.prefetchImages(iconUrls);
+      });
     }
   }
 }

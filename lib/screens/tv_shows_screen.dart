@@ -19,17 +19,70 @@ class TVShowsScreen extends StatefulWidget {
   State<TVShowsScreen> createState() => _TVShowsScreenState();
 }
 
-class _TVShowsScreenState extends State<TVShowsScreen> {
+class _TVShowsScreenState extends State<TVShowsScreen>
+    with AutomaticKeepAliveClientMixin {
   String? _selectedCategoryId;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
+  bool _initialLoadComplete = false;
+
+  @override
+  bool get wantKeepAlive => true; // Keep this widget alive when switching tabs
 
   @override
   void initState() {
     super.initState();
+    debugPrint('TV SHOWS SCREEN: Initializing');
+
     // Use addPostFrameCallback to ensure the widget is fully built before updating state
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadCategories();
+      // Skip if we've already loaded data
+      if (_initialLoadComplete) {
+        debugPrint('TV SHOWS SCREEN: Initial load already complete, skipping');
+        return;
+      }
+
+      debugPrint('TV SHOWS SCREEN: Post-frame callback executing');
+      final provider = Provider.of<ContentProvider>(context, listen: false);
+
+      debugPrint(
+        'TV SHOWS SCREEN: hasPreloadedData = ${provider.hasPreloadedData}',
+      );
+      debugPrint(
+        'TV SHOWS SCREEN: seriesCategories count = ${provider.seriesCategories.length}',
+      );
+      debugPrint(
+        'TV SHOWS SCREEN: seriesList count = ${provider.seriesList.length}',
+      );
+
+      // Only load categories if we don't have preloaded data
+      if (!provider.hasPreloadedData) {
+        debugPrint('TV SHOWS SCREEN: No preloaded data, loading categories');
+        _loadCategories().then((_) {
+          setState(() {
+            _initialLoadComplete = true;
+          });
+        });
+      } else if (provider.seriesCategories.isNotEmpty) {
+        // If we have preloaded data, just set the selected category
+        debugPrint(
+          'TV SHOWS SCREEN: Using preloaded data, setting selected category',
+        );
+        setState(() {
+          _selectedCategoryId = provider.seriesCategories.first.categoryId;
+          _initialLoadComplete = true;
+        });
+        debugPrint(
+          'TV SHOWS SCREEN: Selected category ID: $_selectedCategoryId',
+        );
+      } else {
+        debugPrint(
+          'TV SHOWS SCREEN: No categories available, even with preloaded data',
+        );
+        setState(() {
+          _initialLoadComplete = true;
+        });
+      }
     });
   }
 
@@ -40,28 +93,48 @@ class _TVShowsScreenState extends State<TVShowsScreen> {
   }
 
   Future<void> _loadCategories() async {
+    debugPrint('TV SHOWS SCREEN: Loading series categories');
     final provider = Provider.of<ContentProvider>(context, listen: false);
     await provider.loadSeriesCategories();
+    debugPrint(
+      'TV SHOWS SCREEN: Loaded ${provider.seriesCategories.length} series categories',
+    );
 
     if (provider.seriesCategories.isNotEmpty) {
+      debugPrint('TV SHOWS SCREEN: Categories loaded, now loading series');
       await _loadSeries();
+    } else {
+      debugPrint('TV SHOWS SCREEN: No series categories available');
     }
   }
 
   Future<void> _loadSeries() async {
+    debugPrint('TV SHOWS SCREEN: Loading series');
     final provider = Provider.of<ContentProvider>(context, listen: false);
 
     if (_selectedCategoryId != null) {
+      debugPrint(
+        'TV SHOWS SCREEN: Loading series for selected category: $_selectedCategoryId',
+      );
       await provider.loadSeriesByCategory(_selectedCategoryId!);
     } else if (provider.seriesCategories.isNotEmpty) {
       // Load series from the first category if none is selected
-      await provider.loadSeriesByCategory(
-        provider.seriesCategories.first.categoryId,
+      final firstCategoryId = provider.seriesCategories.first.categoryId;
+      debugPrint(
+        'TV SHOWS SCREEN: Loading series for first category: $firstCategoryId',
+      );
+      await provider.loadSeriesByCategory(firstCategoryId);
+    } else {
+      debugPrint(
+        'TV SHOWS SCREEN: Cannot load series - no categories available',
       );
     }
+
+    debugPrint('TV SHOWS SCREEN: Loaded ${provider.seriesList.length} series');
   }
 
   void _onCategorySelected(String categoryId) {
+    debugPrint('TV SHOWS SCREEN: Category selected: $categoryId');
     setState(() {
       _selectedCategoryId = categoryId.isEmpty ? null : categoryId;
     });
@@ -81,6 +154,9 @@ class _TVShowsScreenState extends State<TVShowsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(
+      context,
+    ); // Must call super.build for AutomaticKeepAliveClientMixin
     return Consumer<ContentProvider>(
       builder: (context, provider, _) {
         if (provider.isLoading) {

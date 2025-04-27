@@ -20,17 +20,66 @@ class MoviesScreen extends StatefulWidget {
   State<MoviesScreen> createState() => _MoviesScreenState();
 }
 
-class _MoviesScreenState extends State<MoviesScreen> {
+class _MoviesScreenState extends State<MoviesScreen>
+    with AutomaticKeepAliveClientMixin {
   String? _selectedCategoryId;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
+  bool _initialLoadComplete = false;
+
+  @override
+  bool get wantKeepAlive => true; // Keep this widget alive when switching tabs
 
   @override
   void initState() {
     super.initState();
+    debugPrint('MOVIES SCREEN: Initializing');
+
     // Use addPostFrameCallback to ensure the widget is fully built before updating state
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadCategories();
+      // Skip if we've already loaded data
+      if (_initialLoadComplete) {
+        debugPrint('MOVIES SCREEN: Initial load already complete, skipping');
+        return;
+      }
+
+      debugPrint('MOVIES SCREEN: Post-frame callback executing');
+      final provider = Provider.of<ContentProvider>(context, listen: false);
+
+      debugPrint(
+        'MOVIES SCREEN: hasPreloadedData = ${provider.hasPreloadedData}',
+      );
+      debugPrint(
+        'MOVIES SCREEN: vodCategories count = ${provider.vodCategories.length}',
+      );
+      debugPrint('MOVIES SCREEN: movies count = ${provider.movies.length}');
+
+      // Only load categories if we don't have preloaded data
+      if (!provider.hasPreloadedData) {
+        debugPrint('MOVIES SCREEN: No preloaded data, loading categories');
+        _loadCategories().then((_) {
+          setState(() {
+            _initialLoadComplete = true;
+          });
+        });
+      } else if (provider.vodCategories.isNotEmpty) {
+        // If we have preloaded data, just set the selected category
+        debugPrint(
+          'MOVIES SCREEN: Using preloaded data, setting selected category',
+        );
+        setState(() {
+          _selectedCategoryId = provider.vodCategories.first.categoryId;
+          _initialLoadComplete = true;
+        });
+        debugPrint('MOVIES SCREEN: Selected category ID: $_selectedCategoryId');
+      } else {
+        debugPrint(
+          'MOVIES SCREEN: No categories available, even with preloaded data',
+        );
+        setState(() {
+          _initialLoadComplete = true;
+        });
+      }
     });
   }
 
@@ -41,28 +90,46 @@ class _MoviesScreenState extends State<MoviesScreen> {
   }
 
   Future<void> _loadCategories() async {
+    debugPrint('MOVIES SCREEN: Loading VOD categories');
     final provider = Provider.of<ContentProvider>(context, listen: false);
     await provider.loadVodCategories();
+    debugPrint(
+      'MOVIES SCREEN: Loaded ${provider.vodCategories.length} VOD categories',
+    );
 
     if (provider.vodCategories.isNotEmpty) {
+      debugPrint('MOVIES SCREEN: Categories loaded, now loading movies');
       await _loadMovies();
+    } else {
+      debugPrint('MOVIES SCREEN: No VOD categories available');
     }
   }
 
   Future<void> _loadMovies() async {
+    debugPrint('MOVIES SCREEN: Loading movies');
     final provider = Provider.of<ContentProvider>(context, listen: false);
 
     if (_selectedCategoryId != null) {
+      debugPrint(
+        'MOVIES SCREEN: Loading movies for selected category: $_selectedCategoryId',
+      );
       await provider.loadMoviesByCategory(_selectedCategoryId!);
     } else if (provider.vodCategories.isNotEmpty) {
       // Load movies from the first category if none is selected
-      await provider.loadMoviesByCategory(
-        provider.vodCategories.first.categoryId,
+      final firstCategoryId = provider.vodCategories.first.categoryId;
+      debugPrint(
+        'MOVIES SCREEN: Loading movies for first category: $firstCategoryId',
       );
+      await provider.loadMoviesByCategory(firstCategoryId);
+    } else {
+      debugPrint('MOVIES SCREEN: Cannot load movies - no categories available');
     }
+
+    debugPrint('MOVIES SCREEN: Loaded ${provider.movies.length} movies');
   }
 
   void _onCategorySelected(String categoryId) {
+    debugPrint('MOVIES SCREEN: Category selected: $categoryId');
     setState(() {
       _selectedCategoryId = categoryId.isEmpty ? null : categoryId;
     });
@@ -82,6 +149,9 @@ class _MoviesScreenState extends State<MoviesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(
+      context,
+    ); // Must call super.build for AutomaticKeepAliveClientMixin
     return Consumer<ContentProvider>(
       builder: (context, provider, _) {
         if (provider.isLoading) {

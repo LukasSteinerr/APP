@@ -11,6 +11,7 @@ class AppColors {
   static const Color text = Color(0xFFFFFFFF);
   static const Color textSecondary = Color(0xFFB0B0B0);
   static const Color error = Color(0xFFCF6679);
+  static const Color success = Color(0xFF4CAF50); // Added success color
 }
 
 // App Text Styles
@@ -20,29 +21,26 @@ class AppTextStyles {
     fontWeight: FontWeight.bold,
     color: AppColors.text,
   );
-  
+
   static const TextStyle headline2 = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.bold,
     color: AppColors.text,
   );
-  
+
   static const TextStyle headline3 = TextStyle(
     fontSize: 18,
     fontWeight: FontWeight.bold,
     color: AppColors.text,
   );
-  
-  static const TextStyle body1 = TextStyle(
-    fontSize: 16,
-    color: AppColors.text,
-  );
-  
+
+  static const TextStyle body1 = TextStyle(fontSize: 16, color: AppColors.text);
+
   static const TextStyle body2 = TextStyle(
     fontSize: 14,
     color: AppColors.textSecondary,
   );
-  
+
   static const TextStyle button = TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.bold,
@@ -117,7 +115,8 @@ class AppStrings {
   static const String cancel = 'Cancel';
   static const String delete = 'Delete';
   static const String noConnections = 'No Connections';
-  static const String addConnectionMessage = 'Add an Xtream connection to get started';
+  static const String addConnectionMessage =
+      'Add an Xtream connection to get started';
   static const String errorLoadingContent = 'Error loading content';
   static const String retry = 'Retry';
   static const String search = 'Search';
@@ -125,5 +124,6 @@ class AppStrings {
   static const String allCategories = 'All Categories';
   static const String loading = 'Loading...';
   static const String connectionError = 'Connection Error';
-  static const String connectionErrorMessage = 'Failed to connect to server. Please check your connection details and try again.';
+  static const String connectionErrorMessage =
+      'Failed to connect to server. Please check your connection details and try again.';
 }

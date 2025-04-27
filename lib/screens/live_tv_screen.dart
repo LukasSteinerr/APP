@@ -20,17 +20,66 @@ class LiveTVScreen extends StatefulWidget {
   State<LiveTVScreen> createState() => _LiveTVScreenState();
 }
 
-class _LiveTVScreenState extends State<LiveTVScreen> {
+class _LiveTVScreenState extends State<LiveTVScreen>
+    with AutomaticKeepAliveClientMixin {
   String? _selectedCategoryId;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
+  bool _initialLoadComplete = false;
+
+  @override
+  bool get wantKeepAlive => true; // Keep this widget alive when switching tabs
 
   @override
   void initState() {
     super.initState();
+    debugPrint('LIVE TV SCREEN: Initializing');
+
     // Use addPostFrameCallback to ensure the widget is fully built before updating state
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadCategories();
+      // Skip if we've already loaded data
+      if (_initialLoadComplete) {
+        debugPrint('LIVE TV SCREEN: Initial load already complete, skipping');
+        return;
+      }
+
+      debugPrint('LIVE TV SCREEN: Post-frame callback executing');
+      final provider = Provider.of<ContentProvider>(context, listen: false);
+
+      debugPrint(
+        'LIVE TV SCREEN: hasPreloadedData = ${provider.hasPreloadedData}',
+      );
+      debugPrint(
+        'LIVE TV SCREEN: liveCategories count = ${provider.liveCategories.length}',
+      );
+      debugPrint(
+        'LIVE TV SCREEN: liveChannels count = ${provider.liveChannels.length}',
+      );
+
+      // Only load categories if we don't have preloaded data
+      if (!provider.hasPreloadedData) {
+        debugPrint('LIVE TV SCREEN: No preloaded data, loading categories');
+        _loadCategories().then((_) {
+          setState(() {
+            _initialLoadComplete = true;
+          });
+        });
+      } else if (provider.liveCategories.isNotEmpty) {
+        // If we have preloaded data, load channels
+        debugPrint('LIVE TV SCREEN: Using preloaded data, loading channels');
+        _loadChannels().then((_) {
+          setState(() {
+            _initialLoadComplete = true;
+          });
+        });
+      } else {
+        debugPrint(
+          'LIVE TV SCREEN: No categories available, even with preloaded data',
+        );
+        setState(() {
+          _initialLoadComplete = true;
+        });
+      }
     });
   }
 
@@ -41,25 +90,42 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
   }
 
   Future<void> _loadCategories() async {
+    debugPrint('LIVE TV SCREEN: Loading live categories');
     final provider = Provider.of<ContentProvider>(context, listen: false);
     await provider.loadLiveCategories();
+    debugPrint(
+      'LIVE TV SCREEN: Loaded ${provider.liveCategories.length} live categories',
+    );
 
     if (provider.liveCategories.isNotEmpty) {
+      debugPrint('LIVE TV SCREEN: Categories loaded, now loading channels');
       await _loadChannels();
+    } else {
+      debugPrint('LIVE TV SCREEN: No live categories available');
     }
   }
 
   Future<void> _loadChannels() async {
+    debugPrint('LIVE TV SCREEN: Loading channels');
     final provider = Provider.of<ContentProvider>(context, listen: false);
 
     if (_selectedCategoryId != null) {
+      debugPrint(
+        'LIVE TV SCREEN: Loading channels for selected category: $_selectedCategoryId',
+      );
       await provider.loadLiveChannelsByCategory(_selectedCategoryId!);
     } else {
+      debugPrint('LIVE TV SCREEN: Loading all live channels');
       await provider.loadAllLiveChannels();
     }
+
+    debugPrint(
+      'LIVE TV SCREEN: Loaded ${provider.liveChannels.length} channels',
+    );
   }
 
   void _onCategorySelected(String categoryId) {
+    debugPrint('LIVE TV SCREEN: Category selected: $categoryId');
     setState(() {
       _selectedCategoryId = categoryId.isEmpty ? null : categoryId;
     });
@@ -79,6 +145,9 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(
+      context,
+    ); // Must call super.build for AutomaticKeepAliveClientMixin
     return Consumer<ContentProvider>(
       builder: (context, provider, _) {
         if (provider.isLoading) {

@@ -6,6 +6,7 @@ import 'live_tv_screen.dart';
 import 'movies_screen.dart';
 import 'tv_shows_screen.dart';
 import 'settings_screen.dart';
+import '../widgets/loading_overlay.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -16,14 +17,11 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
-  
-  final List<Widget> _screens = const [
-    LiveTVScreen(),
-    MoviesScreen(),
-    TVShowsScreen(),
-    SettingsScreen(),
-  ];
-  
+  bool _initialized = false;
+
+  // We'll create screens on demand to ensure they use preloaded data
+  late final List<Widget> _screens;
+
   final List<String> _titles = [
     AppStrings.liveTV,
     AppStrings.movies,
@@ -32,31 +30,69 @@ class _MainScreenState extends State<MainScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+
+    debugPrint('MAIN SCREEN: Initializing screens');
+
+    // Initialize screens - use IndexedStack to preserve state
+    _screens = [
+      const LiveTVScreen(key: PageStorageKey('live_tv')),
+      const MoviesScreen(key: PageStorageKey('movies')),
+      const TVShowsScreen(key: PageStorageKey('tv_shows')),
+      const SettingsScreen(key: PageStorageKey('settings')),
+    ];
+
+    _initialized = true;
+    debugPrint('MAIN SCREEN: Initialization complete');
+  }
+
+  @override
   Widget build(BuildContext context) {
+    debugPrint('MAIN SCREEN: Building MainScreen');
     final contentProvider = Provider.of<ContentProvider>(context);
     final connection = contentProvider.currentConnection;
-    
+
+    debugPrint(
+      'MAIN SCREEN: hasPreloadedData = ${contentProvider.hasPreloadedData}',
+    );
+
     if (connection == null) {
+      debugPrint('MAIN SCREEN: No connection set, navigating back');
       // If no connection is set, go back to home screen
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.pop(context);
       });
       return const SizedBox.shrink();
     }
-    
+
+    debugPrint('MAIN SCREEN: Building with connection: ${connection.name}');
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text('${connection.name} - ${_titles[_currentIndex]}'),
         backgroundColor: AppColors.primaryDark,
       ),
-      body: _screens[_currentIndex],
+      body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
+          debugPrint(
+            'MAIN SCREEN: Tab tapped - index: $index, current: $_currentIndex',
+          );
+          // Only update if the index has changed
+          if (_currentIndex != index) {
+            debugPrint(
+              'MAIN SCREEN: Switching to tab $index (${_titles[index]})',
+            );
+            setState(() {
+              _currentIndex = index;
+            });
+            debugPrint('MAIN SCREEN: Tab switch complete');
+          } else {
+            debugPrint('MAIN SCREEN: Tab already selected, no change');
+          }
         },
         type: BottomNavigationBarType.fixed,
         backgroundColor: AppColors.primaryDark,

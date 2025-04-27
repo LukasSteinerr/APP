@@ -5,10 +5,12 @@ import '../models/series.dart';
 import '../models/xtream_connection.dart';
 import '../services/xtream_service.dart';
 import '../models/category.dart';
+import '../services/data_preloader_service.dart';
 
 class ContentProvider with ChangeNotifier {
   XtreamConnection? _currentConnection;
   XtreamService? _xtreamService;
+  DataPreloaderService? _preloaderService;
 
   // Live TV
   List<Category> _liveCategories = [];
@@ -24,7 +26,11 @@ class ContentProvider with ChangeNotifier {
 
   // Loading and error states
   bool _isLoading = false;
+  bool _isPreloading = false;
   String? _error;
+
+  // Preloaded data status
+  bool _hasPreloadedData = false;
 
   // Getters
   XtreamConnection? get currentConnection => _currentConnection;
@@ -35,6 +41,8 @@ class ContentProvider with ChangeNotifier {
   List<Category> get seriesCategories => _seriesCategories;
   List<Series> get seriesList => _seriesList;
   bool get isLoading => _isLoading;
+  bool get isPreloading => _isPreloading;
+  bool get hasPreloadedData => _hasPreloadedData;
   String? get error => _error;
 
   // Set current connection
@@ -45,19 +53,88 @@ class ContentProvider with ChangeNotifier {
       username: connection.username,
       password: connection.password,
     );
+    _preloaderService = DataPreloaderService(_xtreamService!);
     notifyListeners();
+  }
+
+  // Preload all data for the current connection
+  Future<bool> preloadAllData() async {
+    debugPrint('CONTENT PROVIDER: Starting preloadAllData()');
+
+    if (_xtreamService == null || _preloaderService == null) {
+      debugPrint('CONTENT PROVIDER: Cannot preload - services not initialized');
+      return false;
+    }
+
+    debugPrint('CONTENT PROVIDER: Setting preloading state to true');
+    _isPreloading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      debugPrint('CONTENT PROVIDER: Calling preloaderService.preloadAllData()');
+      final preloadedData = await _preloaderService!.preloadAllData();
+
+      // Update the provider with preloaded data
+      debugPrint('CONTENT PROVIDER: Updating provider with preloaded data');
+
+      debugPrint(
+        'CONTENT PROVIDER: Setting live categories (${preloadedData.liveCategories.length})',
+      );
+      _liveCategories = preloadedData.liveCategories.cast<Category>();
+
+      debugPrint(
+        'CONTENT PROVIDER: Setting VOD categories (${preloadedData.vodCategories.length})',
+      );
+      _vodCategories = preloadedData.vodCategories.cast<Category>();
+
+      debugPrint(
+        'CONTENT PROVIDER: Setting movies (${preloadedData.initialMovies.length})',
+      );
+      _movies = preloadedData.initialMovies.cast<Movie>();
+
+      debugPrint(
+        'CONTENT PROVIDER: Setting series categories (${preloadedData.seriesCategories.length})',
+      );
+      _seriesCategories = preloadedData.seriesCategories.cast<Category>();
+
+      debugPrint(
+        'CONTENT PROVIDER: Setting series list (${preloadedData.initialSeries.length})',
+      );
+      _seriesList = preloadedData.initialSeries.cast<Series>();
+
+      debugPrint('CONTENT PROVIDER: Setting hasPreloadedData to true');
+      _hasPreloadedData = true;
+      _isPreloading = false;
+      notifyListeners();
+
+      debugPrint('CONTENT PROVIDER: preloadAllData completed successfully');
+      return true;
+    } catch (e, stackTrace) {
+      debugPrint('CONTENT PROVIDER ERROR: Failed to preload data: $e');
+      debugPrint('CONTENT PROVIDER ERROR: Stack trace: $stackTrace');
+      _error = 'Failed to preload data: $e';
+      _isPreloading = false;
+      _hasPreloadedData = false;
+      notifyListeners();
+
+      debugPrint('CONTENT PROVIDER: preloadAllData failed');
+      return false;
+    }
   }
 
   // Clear current connection
   void clearConnection() {
     _currentConnection = null;
     _xtreamService = null;
+    _preloaderService = null;
     _liveCategories = [];
     _liveChannels = [];
     _vodCategories = [];
     _movies = [];
     _seriesCategories = [];
     _seriesList = [];
+    _hasPreloadedData = false;
     notifyListeners();
   }
 
@@ -65,6 +142,15 @@ class ContentProvider with ChangeNotifier {
   Future<void> loadLiveCategories() async {
     if (_xtreamService == null) return;
 
+    // Skip API call if we already have preloaded data
+    if (_hasPreloadedData && _liveCategories.isNotEmpty) {
+      debugPrint(
+        'CONTENT PROVIDER: Using preloaded live categories, skipping API call',
+      );
+      return;
+    }
+
+    debugPrint('CONTENT PROVIDER: Loading live categories from API');
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -84,6 +170,20 @@ class ContentProvider with ChangeNotifier {
   Future<void> loadLiveChannelsByCategory(String categoryId) async {
     if (_xtreamService == null) return;
 
+    // Skip API call if we already have preloaded data for the first category
+    if (_hasPreloadedData &&
+        _liveChannels.isNotEmpty &&
+        _liveCategories.isNotEmpty &&
+        _liveCategories.first.categoryId == categoryId) {
+      debugPrint(
+        'CONTENT PROVIDER: Using preloaded live channels for category $categoryId, skipping API call',
+      );
+      return;
+    }
+
+    debugPrint(
+      'CONTENT PROVIDER: Loading live channels for category $categoryId from API',
+    );
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -105,6 +205,15 @@ class ContentProvider with ChangeNotifier {
   Future<void> loadAllLiveChannels() async {
     if (_xtreamService == null) return;
 
+    // Skip API call if we already have preloaded data
+    if (_hasPreloadedData && _liveChannels.isNotEmpty) {
+      debugPrint(
+        'CONTENT PROVIDER: Using preloaded live channels, skipping API call',
+      );
+      return;
+    }
+
+    debugPrint('CONTENT PROVIDER: Loading all live channels from API');
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -124,6 +233,15 @@ class ContentProvider with ChangeNotifier {
   Future<void> loadVodCategories() async {
     if (_xtreamService == null) return;
 
+    // Skip API call if we already have preloaded data
+    if (_hasPreloadedData && _vodCategories.isNotEmpty) {
+      debugPrint(
+        'CONTENT PROVIDER: Using preloaded VOD categories, skipping API call',
+      );
+      return;
+    }
+
+    debugPrint('CONTENT PROVIDER: Loading VOD categories from API');
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -143,6 +261,20 @@ class ContentProvider with ChangeNotifier {
   Future<void> loadMoviesByCategory(String categoryId) async {
     if (_xtreamService == null) return;
 
+    // Skip API call if we already have preloaded data for the first category
+    if (_hasPreloadedData &&
+        _movies.isNotEmpty &&
+        _vodCategories.isNotEmpty &&
+        _vodCategories.first.categoryId == categoryId) {
+      debugPrint(
+        'CONTENT PROVIDER: Using preloaded movies for category $categoryId, skipping API call',
+      );
+      return;
+    }
+
+    debugPrint(
+      'CONTENT PROVIDER: Loading movies for category $categoryId from API',
+    );
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -162,6 +294,15 @@ class ContentProvider with ChangeNotifier {
   Future<void> loadSeriesCategories() async {
     if (_xtreamService == null) return;
 
+    // Skip API call if we already have preloaded data
+    if (_hasPreloadedData && _seriesCategories.isNotEmpty) {
+      debugPrint(
+        'CONTENT PROVIDER: Using preloaded series categories, skipping API call',
+      );
+      return;
+    }
+
+    debugPrint('CONTENT PROVIDER: Loading series categories from API');
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -181,6 +322,20 @@ class ContentProvider with ChangeNotifier {
   Future<void> loadSeriesByCategory(String categoryId) async {
     if (_xtreamService == null) return;
 
+    // Skip API call if we already have preloaded data for the first category
+    if (_hasPreloadedData &&
+        _seriesList.isNotEmpty &&
+        _seriesCategories.isNotEmpty &&
+        _seriesCategories.first.categoryId == categoryId) {
+      debugPrint(
+        'CONTENT PROVIDER: Using preloaded series for category $categoryId, skipping API call',
+      );
+      return;
+    }
+
+    debugPrint(
+      'CONTENT PROVIDER: Loading series for category $categoryId from API',
+    );
     _isLoading = true;
     _error = null;
     notifyListeners();

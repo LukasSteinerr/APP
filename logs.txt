@@ -1,0 +1,117 @@
+flutter ( 6808): ===== ADD CONNECTION: Starting _preloadData() =====
+I/flutter ( 6808): ADD CONNECTION: Getting ConnectionsProvider
+I/flutter ( 6808): ADD CONNECTION: Getting ContentProvider
+I/flutter ( 6808): ADD CONNECTION: Showing preloading overlay
+I/flutter ( 6808): ADD CONNECTION: Getting connections list
+I/flutter ( 6808): ADD CONNECTION: Found 1 connections
+I/flutter ( 6808): ADD CONNECTION: Setting connection: test
+I/flutter ( 6808): ADD CONNECTION: Updating preload step to 1
+I/flutter ( 6808): ADD CONNECTION: Starting data preloading
+I/flutter ( 6808): CONTENT PROVIDER: Starting preloadAllData()
+I/flutter ( 6808): CONTENT PROVIDER: Setting preloading state to true
+I/flutter ( 6808): CONTENT PROVIDER: Calling preloaderService.preloadAllData()
+I/flutter ( 6808): ===== PRELOADING: Starting data preloading process =====
+I/flutter ( 6808): PRELOADING: Fetching VOD categories...
+I/flutter ( 6808): PRELOADING: Received 41 VOD categories
+I/flutter ( 6808): PRELOADING: Fetching movies for category ID: 28
+I/flutter ( 6808): PRELOADING: Received 4813 movies for first category
+I/flutter ( 6808): PRELOADING: Fetching series categories...
+I/flutter ( 6808): PRELOADING: Received 11 series categories
+I/flutter ( 6808): PRELOADING: Fetching series for category ID: 470
+I/flutter ( 6808): PRELOADING: Received 3696 series for first category
+I/flutter ( 6808): PRELOADING: Fetching Live TV categories...
+I/flutter ( 6808): PRELOADING: Received 207 Live TV categories
+I/flutter ( 6808): ===== PRELOADING: Data preloading completed successfully =====
+I/flutter ( 6808): CONTENT PROVIDER: Updating provider with preloaded data
+I/flutter ( 6808): CONTENT PROVIDER: Setting live categories (207)
+I/flutter ( 6808): CONTENT PROVIDER: Setting VOD categories (41)
+I/flutter ( 6808): CONTENT PROVIDER: Setting movies (4813)
+I/flutter ( 6808): CONTENT PROVIDER: Setting series categories (11)
+I/flutter ( 6808): CONTENT PROVIDER: Setting series list (3696)
+I/flutter ( 6808): CONTENT PROVIDER: Setting hasPreloadedData to true
+I/flutter ( 6808): CONTENT PROVIDER: preloadAllData completed successfully
+I/flutter ( 6808): ADD CONNECTION: Preloading completed with success=true
+I/flutter ( 6808): ADD CONNECTION: Navigating to MainScreen
+I/flutter ( 6808): MAIN SCREEN: Initializing screens
+I/flutter ( 6808): MAIN SCREEN: Initialization complete
+I/flutter ( 6808): MAIN SCREEN: Building MainScreen
+I/flutter ( 6808): MAIN SCREEN: hasPreloadedData = true
+I/flutter ( 6808): MAIN SCREEN: Building with connection: test
+I/flutter ( 6808): LIVE TV SCREEN: Initializing
+I/flutter ( 6808): MOVIES SCREEN: Initializing
+I/flutter ( 6808): TV SHOWS SCREEN: Initializing
+I/flutter ( 6808): LIVE TV SCREEN: Post-frame callback executing
+I/flutter ( 6808): LIVE TV SCREEN: hasPreloadedData = true
+I/flutter ( 6808): LIVE TV SCREEN: liveCategories count = 207
+I/flutter ( 6808): LIVE TV SCREEN: liveChannels count = 0
+I/flutter ( 6808): LIVE TV SCREEN: Using preloaded data, loading channels
+I/flutter ( 6808): LIVE TV SCREEN: Loading channels
+I/flutter ( 6808): LIVE TV SCREEN: Loading all live channels
+I/flutter ( 6808): CONTENT PROVIDER: Loading all live channels from API
+I/flutter ( 6808): MOVIES SCREEN: Post-frame callback executing
+I/flutter ( 6808): MOVIES SCREEN: hasPreloadedData = true
+I/flutter ( 6808): MOVIES SCREEN: vodCategories count = 41
+I/flutter ( 6808): MOVIES SCREEN: movies count = 4813
+I/flutter ( 6808): MOVIES SCREEN: Using preloaded data, setting selected category
+I/flutter ( 6808): MOVIES SCREEN: Selected category ID: 28
+I/flutter ( 6808): TV SHOWS SCREEN: Post-frame callback executing
+I/flutter ( 6808): TV SHOWS SCREEN: hasPreloadedData = true
+I/flutter ( 6808): TV SHOWS SCREEN: seriesCategories count = 11
+I/flutter ( 6808): TV SHOWS SCREEN: seriesList count = 3696
+I/flutter ( 6808): TV SHOWS SCREEN: Using preloaded data, setting selected category
+I/flutter ( 6808): TV SHOWS SCREEN: Selected category ID: 470
+I/flutter ( 6808): MAIN SCREEN: Building MainScreen
+I/flutter ( 6808): MAIN SCREEN: hasPreloadedData = true
+I/flutter ( 6808): MAIN SCREEN: Building with connection: test
+I/ImeTracker( 6808): com.example.xtream_iptv_pro:9b9f2cf4: onRequestHide at ORIGIN_CLIENT_HIDE_SOFT_INPUT reason HIDE_SOFT_INPUT
+I/InputMethodManager_LC( 6808): hsifw() - flag : 0
+I/InputMethodManager_LC( 6808): hsifw() - mService.hideSoftInput
+I/flutter ( 6808): LIVE TV SCREEN: Loaded 18184 channels
+I/flutter ( 6808): MAIN SCREEN: Building MainScreen
+I/flutter ( 6808): MAIN SCREEN: hasPreloadedData = true
+I/flutter ( 6808): MAIN SCREEN: Building with connection: test
+I/flutter ( 6808): Getting movie details by TMDB ID: 1303875
+I/flutter ( 6808): Getting movie details by TMDB ID: 1457124
+I/flutter ( 6808): Getting movie details by TMDB ID: 1078600
+I/flutter ( 6808): Getting movie details by TMDB ID: 1287804
+I/flutter ( 6808): Getting movie details by TMDB ID: 1242669
+I/flutter ( 6808): Getting movie details by TMDB ID: 549509
+I/flutter ( 6808): Getting movie details by TMDB ID: 794347
+I/flutter ( 6808): Getting movie details by TMDB ID: 940139
+I/flutter ( 6808): Getting movie details by TMDB ID: 1064213
+I/flutter ( 6808): Getting movie details by TMDB ID: 1123187
+I/flutter ( 6808): Getting movie details by TMDB ID: 1097549
+I/flutter ( 6808): Getting movie details by TMDB ID: 799766
+I/flutter ( 6808): Getting movie details by TMDB ID: 1035048
+I/flutter ( 6808): Getting movie details by TMDB ID: 950396
+I/flutter ( 6808): Getting movie details by TMDB ID: 1235499
+I/flutter ( 6808): Getting TV show details by TMDB ID: 114925
+I/flutter ( 6808): Getting TV show details by TMDB ID: 157744
+I/flutter ( 6808): Getting TV show details by TMDB ID: 209167
+I/flutter ( 6808): Getting TV show details by TMDB ID: 208944
+I/flutter ( 6808): Getting TV show details by TMDB ID: 135868
+I/flutter ( 6808): Getting TV show details by TMDB ID: 205272
+I/flutter ( 6808): Getting TV show details by TMDB ID: 202884
+I/flutter ( 6808): Getting TV show details by TMDB ID: 206903
+I/flutter ( 6808): Getting TV show details by TMDB ID: 157202
+I/flutter ( 6808): Getting TV show details by TMDB ID: 207941
+I/flutter ( 6808): Getting TV show details by TMDB ID: 199935
+I/flutter ( 6808): Getting TV show details by TMDB ID: 113988
+I/flutter ( 6808): Getting TV show details by TMDB ID: 125392
+I/flutter ( 6808): Getting TV show details by TMDB ID: 83867
+I/flutter ( 6808): Getting TV show details by TMDB ID: 153269
+I/flutter ( 6808): Successfully retrieved movie details for TMDB ID: 1457124
+I/flutter ( 6808): Successfully retrieved movie details for TMDB ID: 1035048
+I/flutter ( 6808): Successfully retrieved movie details for TMDB ID: 549509
+I/flutter ( 6808): Successfully retrieved movie details for TMDB ID: 1235499
+I/flutter ( 6808): Successfully retrieved movie details for TMDB ID: 1078600
+I/flutter ( 6808): Successfully retrieved movie details for TMDB ID: 950396
+I/flutter ( 6808): Successfully retrieved movie details for TMDB ID: 1064213
+I/flutter ( 6808): Successfully retrieved movie details for TMDB ID: 799766
+I/flutter ( 6808): Successfully retrieved movie details for TMDB ID: 1242669
+I/flutter ( 6808): Successfully retrieved movie details for TMDB ID: 1287804
+I/flutter ( 6808): Successfully retrieved movie details for TMDB ID: 1303875
+I/flutter ( 6808): Successfully retrieved movie details for TMDB ID: 794347
+I/flutter ( 6808): Successfully retrieved movie details for TMDB ID: 940139
+I/flutter ( 6808): Successfully retrieved movie details for TMDB ID: 1123187
+I/flutter ( 6808): Successfully retrieved movie details for TMDB ID: 1097549

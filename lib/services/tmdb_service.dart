@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import '../services/compute_service.dart';
 
 class TMDBService {
   // TMDB API key
@@ -112,7 +114,7 @@ class TMDBService {
   // Get movie details directly by TMDB ID
   static Future<Map<String, dynamic>?> getMovieById(String tmdbId) async {
     try {
-      print('Getting movie details by TMDB ID: $tmdbId');
+      debugPrint('Getting movie details by TMDB ID: $tmdbId');
 
       // Build the query URL for direct movie lookup
       final url = '$baseUrl/movie/$tmdbId?api_key=$apiKey';
@@ -121,26 +123,35 @@ class TMDBService {
       final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        print('Successfully retrieved movie details for TMDB ID: $tmdbId');
+        // Use isolate to parse JSON
+        final data = await ComputeService.compute<String, Map<String, dynamic>>(
+          _parseMovieData,
+          response.body,
+        );
+        debugPrint('Successfully retrieved movie details for TMDB ID: $tmdbId');
         return data;
       } else {
-        print(
+        debugPrint(
           'TMDB API error for movie ID $tmdbId: ${response.statusCode} - ${response.body}',
         );
       }
 
       return null;
     } catch (e) {
-      print('Error getting movie by ID: $e');
+      debugPrint('Error getting movie by ID: $e');
       return null;
     }
+  }
+
+  // Static method for parsing movie data in isolate
+  static Map<String, dynamic> _parseMovieData(String responseBody) {
+    return json.decode(responseBody) as Map<String, dynamic>;
   }
 
   // Get TV show details directly by TMDB ID
   static Future<Map<String, dynamic>?> getTVShowById(String tmdbId) async {
     try {
-      print('Getting TV show details by TMDB ID: $tmdbId');
+      debugPrint('Getting TV show details by TMDB ID: $tmdbId');
 
       // Build the query URL for direct TV show lookup
       final url = '$baseUrl/tv/$tmdbId?api_key=$apiKey';
@@ -149,20 +160,31 @@ class TMDBService {
       final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        print('Successfully retrieved TV show details for TMDB ID: $tmdbId');
+        // Use isolate to parse JSON
+        final data = await ComputeService.compute<String, Map<String, dynamic>>(
+          _parseTVShowData,
+          response.body,
+        );
+        debugPrint(
+          'Successfully retrieved TV show details for TMDB ID: $tmdbId',
+        );
         return data;
       } else {
-        print(
+        debugPrint(
           'TMDB API error for TV show ID $tmdbId: ${response.statusCode} - ${response.body}',
         );
       }
 
       return null;
     } catch (e) {
-      print('Error getting TV show by ID: $e');
+      debugPrint('Error getting TV show by ID: $e');
       return null;
     }
+  }
+
+  // Static method for parsing TV show data in isolate
+  static Map<String, dynamic> _parseTVShowData(String responseBody) {
+    return json.decode(responseBody) as Map<String, dynamic>;
   }
 
   // Get the full poster URL for a poster path
@@ -212,7 +234,7 @@ class TMDBService {
     // Remove extra spaces
     cleaned = cleaned.replaceAll(RegExp(r'\s+'), ' ').trim();
 
-    print('Cleaned title for search: "$title" -> "$cleaned"');
+    debugPrint('Cleaned title for search: "$title" -> "$cleaned"');
 
     // Encode for URL
     return Uri.encodeComponent(cleaned);

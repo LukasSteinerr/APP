@@ -4,6 +4,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../models/category.dart';
 import '../models/channel.dart';
 import '../providers/content_provider.dart';
+import '../services/data_processing_service.dart';
+import '../services/image_service.dart';
 import '../utils/constants.dart';
 import '../widgets/category_list.dart';
 import '../widgets/error_display.dart';
@@ -70,14 +72,9 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
     });
   }
 
-  List<Channel> _getFilteredChannels(List<Channel> channels) {
-    if (_searchQuery.isEmpty) {
-      return channels;
-    }
-
-    return channels.where((channel) {
-      return channel.name.toLowerCase().contains(_searchQuery);
-    }).toList();
+  Future<List<Channel>> _getFilteredChannels(List<Channel> channels) async {
+    // Use isolate for filtering channels
+    return await DataProcessingService.filterChannels(channels, _searchQuery);
   }
 
   @override
@@ -96,8 +93,8 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
         }
 
         final categories = provider.liveCategories;
-        final channels = _getFilteredChannels(provider.liveChannels);
 
+        // Use FutureBuilder to handle the async filtering
         return Column(
           children: [
             // Search Bar
@@ -127,31 +124,55 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
                 onCategorySelected: _onCategorySelected,
               ),
 
-            // Channels
+            // Channels with FutureBuilder
             Expanded(
-              child:
-                  channels.isEmpty
-                      ? Center(
-                        child: Text(
-                          AppStrings.noResults,
-                          style: AppTextStyles.body1,
-                        ),
-                      )
-                      : GridView.builder(
-                        padding: const EdgeInsets.all(AppPaddings.medium),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              childAspectRatio: 16 / 9,
-                              crossAxisSpacing: AppPaddings.medium,
-                              mainAxisSpacing: AppPaddings.medium,
-                            ),
-                        itemCount: channels.length,
-                        itemBuilder: (context, index) {
-                          final channel = channels[index];
-                          return _buildChannelCard(context, channel, provider);
-                        },
+              child: FutureBuilder<List<Channel>>(
+                future: _getFilteredChannels(provider.liveChannels),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                        'Error: ${snapshot.error}',
+                        style: AppTextStyles.body1,
                       ),
+                    );
+                  }
+
+                  final channels = snapshot.data ?? [];
+
+                  if (channels.isEmpty) {
+                    return Center(
+                      child: Text(
+                        AppStrings.noResults,
+                        style: AppTextStyles.body1,
+                      ),
+                    );
+                  }
+
+                  // Prefetch channel icons in the background
+                  _prefetchChannelIcons(channels);
+
+                  return GridView.builder(
+                    padding: const EdgeInsets.all(AppPaddings.medium),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 16 / 9,
+                          crossAxisSpacing: AppPaddings.medium,
+                          mainAxisSpacing: AppPaddings.medium,
+                        ),
+                    itemCount: channels.length,
+                    itemBuilder: (context, index) {
+                      final channel = channels[index];
+                      return _buildChannelCard(context, channel, provider);
+                    },
+                  );
+                },
+              ),
             ),
           ],
         );
@@ -233,5 +254,20 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
                 PlayerScreen(title: channel.name, streamUrl: streamUrl),
       ),
     );
+  }
+
+  // Prefetch channel icons in the background using isolates
+  void _prefetchChannelIcons(List<Channel> channels) {
+    // Extract icon URLs
+    final iconUrls =
+        channels
+            .where((channel) => channel.streamIcon.isNotEmpty)
+            .map((channel) => channel.streamIcon)
+            .toList();
+
+    // Prefetch in background
+    if (iconUrls.isNotEmpty) {
+      ImageService.prefetchImages(iconUrls);
+    }
   }
 }

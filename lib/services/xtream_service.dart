@@ -4,6 +4,7 @@ import '../models/category.dart';
 import '../models/channel.dart';
 import '../models/movie.dart';
 import '../models/series.dart';
+import '../services/compute_service.dart';
 
 class XtreamService {
   final String serverUrl;
@@ -61,14 +62,23 @@ class XtreamService {
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        return data.map((item) => Channel.fromJson(item)).toList();
+        // Use isolate to parse JSON and create model objects
+        return await ComputeService.compute<String, List<Channel>>(
+          _parseLiveStreams,
+          response.body,
+        );
       } else {
         throw Exception('Failed to load live streams: ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('Error fetching live streams: $e');
     }
+  }
+
+  // Static method for parsing live streams in isolate
+  static List<Channel> _parseLiveStreams(String responseBody) {
+    final List<dynamic> data = json.decode(responseBody);
+    return data.map((item) => Channel.fromJson(item)).toList();
   }
 
   // Get all live streams
@@ -79,8 +89,11 @@ class XtreamService {
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        return data.map((item) => Channel.fromJson(item)).toList();
+        // Use isolate to parse JSON and create model objects
+        return await ComputeService.compute<String, List<Channel>>(
+          _parseLiveStreams,
+          response.body,
+        );
       } else {
         throw Exception(
           'Failed to load all live streams: ${response.statusCode}',
@@ -119,14 +132,23 @@ class XtreamService {
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        return data.map((item) => Movie.fromJson(item)).toList();
+        // Use isolate to parse JSON and create model objects
+        return await ComputeService.compute<String, List<Movie>>(
+          _parseMovies,
+          response.body,
+        );
       } else {
         throw Exception('Failed to load VOD streams: ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('Error fetching VOD streams: $e');
     }
+  }
+
+  // Static method for parsing movies in isolate
+  static List<Movie> _parseMovies(String responseBody) {
+    final List<dynamic> data = json.decode(responseBody);
+    return data.map((item) => Movie.fromJson(item)).toList();
   }
 
   // Get series categories
@@ -157,14 +179,23 @@ class XtreamService {
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        return data.map((item) => Series.fromJson(item)).toList();
+        // Use isolate to parse JSON and create model objects
+        return await ComputeService.compute<String, List<Series>>(
+          _parseSeries,
+          response.body,
+        );
       } else {
         throw Exception('Failed to load series: ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('Error fetching series: $e');
     }
+  }
+
+  // Static method for parsing series in isolate
+  static List<Series> _parseSeries(String responseBody) {
+    final List<dynamic> data = json.decode(responseBody);
+    return data.map((item) => Series.fromJson(item)).toList();
   }
 
   // Get series info
@@ -175,30 +206,35 @@ class XtreamService {
       );
 
       if (response.statusCode == 200) {
-        final dynamic rawData = json.decode(response.body);
-
-        // Handle both Map and List responses
-        if (rawData is Map<String, dynamic>) {
-          return rawData;
-        } else if (rawData is List && rawData.isNotEmpty) {
-          // If it's a list, take the first item if it's a map
-          if (rawData[0] is Map<String, dynamic>) {
-            return rawData[0] as Map<String, dynamic>;
-          }
-        }
-
-        // If we can't parse it as expected, return an empty map with info
-        return {
-          'info': 'No series info available',
-          'seasons': {},
-          'episodes': {},
-        };
+        // Use isolate to parse JSON and process the data
+        return await ComputeService.compute<String, Map<String, dynamic>>(
+          _parseSeriesInfo,
+          response.body,
+        );
       } else {
         throw Exception('Failed to load series info: ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('Error fetching series info: $e');
     }
+  }
+
+  // Static method for parsing series info in isolate
+  static Map<String, dynamic> _parseSeriesInfo(String responseBody) {
+    final dynamic rawData = json.decode(responseBody);
+
+    // Handle both Map and List responses
+    if (rawData is Map<String, dynamic>) {
+      return rawData;
+    } else if (rawData is List && rawData.isNotEmpty) {
+      // If it's a list, take the first item if it's a map
+      if (rawData[0] is Map<String, dynamic>) {
+        return rawData[0] as Map<String, dynamic>;
+      }
+    }
+
+    // If we can't parse it as expected, return an empty map with info
+    return {'info': 'No series info available', 'seasons': {}, 'episodes': {}};
   }
 
   // Normalize URL for stream URLs

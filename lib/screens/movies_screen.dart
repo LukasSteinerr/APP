@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../models/category.dart';
 import '../models/movie.dart';
 import '../providers/content_provider.dart';
+import '../services/data_processing_service.dart';
+import '../services/image_service.dart';
 import '../services/tmdb_service.dart';
 import '../utils/constants.dart';
 import '../widgets/category_list.dart';
@@ -73,14 +75,9 @@ class _MoviesScreenState extends State<MoviesScreen> {
     });
   }
 
-  List<Movie> _getFilteredMovies(List<Movie> movies) {
-    if (_searchQuery.isEmpty) {
-      return movies;
-    }
-
-    return movies.where((movie) {
-      return movie.name.toLowerCase().contains(_searchQuery);
-    }).toList();
+  Future<List<Movie>> _getFilteredMovies(List<Movie> movies) async {
+    // Use isolate for filtering movies
+    return await DataProcessingService.filterMovies(movies, _searchQuery);
   }
 
   @override
@@ -99,7 +96,6 @@ class _MoviesScreenState extends State<MoviesScreen> {
         }
 
         final categories = provider.vodCategories;
-        final movies = _getFilteredMovies(provider.movies);
 
         return Column(
           children: [
@@ -131,36 +127,59 @@ class _MoviesScreenState extends State<MoviesScreen> {
                 showAllOption: false,
               ),
 
-            // Movies
+            // Movies with FutureBuilder
             Expanded(
-              child:
-                  movies.isEmpty
-                      ? Center(
-                        child: Text(
-                          AppStrings.noResults,
-                          style: AppTextStyles.body1,
-                        ),
-                      )
-                      : GridView.builder(
-                        padding: const EdgeInsets.all(AppPaddings.medium),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3,
-                              childAspectRatio: 2 / 3,
-                              crossAxisSpacing: AppPaddings.small,
-                              mainAxisSpacing: AppPaddings.small,
-                            ),
-                        itemCount: movies.length,
-                        itemBuilder: (context, index) {
-                          final movie = movies[index];
-                          return MovieCard(
-                            movie: movie,
-                            onTap:
-                                () =>
-                                    _openMovieDetails(context, movie, provider),
-                          );
-                        },
+              child: FutureBuilder<List<Movie>>(
+                future: _getFilteredMovies(provider.movies),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                        'Error: ${snapshot.error}',
+                        style: AppTextStyles.body1,
                       ),
+                    );
+                  }
+
+                  final movies = snapshot.data ?? [];
+
+                  if (movies.isEmpty) {
+                    return Center(
+                      child: Text(
+                        AppStrings.noResults,
+                        style: AppTextStyles.body1,
+                      ),
+                    );
+                  }
+
+                  // Prefetch movie posters in the background
+                  _prefetchMoviePosters(movies);
+
+                  return GridView.builder(
+                    padding: const EdgeInsets.all(AppPaddings.medium),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          childAspectRatio: 2 / 3,
+                          crossAxisSpacing: AppPaddings.small,
+                          mainAxisSpacing: AppPaddings.small,
+                        ),
+                    itemCount: movies.length,
+                    itemBuilder: (context, index) {
+                      final movie = movies[index];
+                      return MovieCard(
+                        movie: movie,
+                        onTap:
+                            () => _openMovieDetails(context, movie, provider),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           ],
         );
@@ -177,5 +196,30 @@ class _MoviesScreenState extends State<MoviesScreen> {
       context,
       MaterialPageRoute(builder: (context) => MovieDetailsScreen(movie: movie)),
     );
+  }
+
+  // Prefetch movie posters in the background using isolates
+  void _prefetchMoviePosters(List<Movie> movies) {
+    // Extract poster URLs
+    final posterUrls =
+        movies
+            .where((movie) => movie.streamIcon.isNotEmpty)
+            .map((movie) => movie.streamIcon)
+            .toList();
+
+    // Add TMDB poster URLs if available
+    for (final movie in movies) {
+      if (movie.tmdbId != null &&
+          movie.tmdbId!.isNotEmpty &&
+          movie.tmdbId != '0') {
+        // We don't have direct access to the TMDB poster URL here,
+        // but we can prefetch them in the MovieCard widget
+      }
+    }
+
+    // Prefetch in background
+    if (posterUrls.isNotEmpty) {
+      ImageService.prefetchImages(posterUrls);
+    }
   }
 }

@@ -50,11 +50,11 @@ class ConnectionsProvider with ChangeNotifier {
       );
 
       final success = await _storageService.saveXtreamConnection(connection);
-      
+
       if (success) {
         await loadConnections();
       }
-      
+
       return success;
     } catch (e) {
       _error = 'Failed to add connection: $e';
@@ -66,11 +66,11 @@ class ConnectionsProvider with ChangeNotifier {
   Future<bool> updateConnection(XtreamConnection connection) async {
     try {
       final success = await _storageService.saveXtreamConnection(connection);
-      
+
       if (success) {
         await loadConnections();
       }
-      
+
       return success;
     } catch (e) {
       _error = 'Failed to update connection: $e';
@@ -82,14 +82,30 @@ class ConnectionsProvider with ChangeNotifier {
   Future<bool> deleteConnection(String id) async {
     try {
       final success = await _storageService.deleteXtreamConnection(id);
-      
+
       if (success) {
         await loadConnections();
       }
-      
+
       return success;
     } catch (e) {
       _error = 'Failed to delete connection: $e';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> deleteAllConnections() async {
+    try {
+      final success = await _storageService.deleteAllConnections();
+
+      if (success) {
+        await loadConnections();
+      }
+
+      return success;
+    } catch (e) {
+      _error = 'Failed to delete all connections: $e';
       notifyListeners();
       return false;
     }

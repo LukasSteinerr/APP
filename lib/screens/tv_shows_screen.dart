@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../models/category.dart';
 import '../models/series.dart';
 import '../providers/content_provider.dart';
+import '../services/data_processing_service.dart';
+import '../services/image_service.dart';
 import '../utils/constants.dart';
 import '../widgets/category_list.dart';
 import '../widgets/error_display.dart';
@@ -72,14 +74,9 @@ class _TVShowsScreenState extends State<TVShowsScreen> {
     });
   }
 
-  List<Series> _getFilteredSeries(List<Series> seriesList) {
-    if (_searchQuery.isEmpty) {
-      return seriesList;
-    }
-
-    return seriesList.where((series) {
-      return series.name.toLowerCase().contains(_searchQuery);
-    }).toList();
+  Future<List<Series>> _getFilteredSeries(List<Series> seriesList) async {
+    // Use isolate for filtering series
+    return await DataProcessingService.filterSeries(seriesList, _searchQuery);
   }
 
   @override
@@ -98,7 +95,6 @@ class _TVShowsScreenState extends State<TVShowsScreen> {
         }
 
         final categories = provider.seriesCategories;
-        final seriesList = _getFilteredSeries(provider.seriesList);
 
         return Column(
           children: [
@@ -130,34 +126,58 @@ class _TVShowsScreenState extends State<TVShowsScreen> {
                 showAllOption: false,
               ),
 
-            // Series
+            // Series with FutureBuilder
             Expanded(
-              child:
-                  seriesList.isEmpty
-                      ? Center(
-                        child: Text(
-                          AppStrings.noResults,
-                          style: AppTextStyles.body1,
-                        ),
-                      )
-                      : GridView.builder(
-                        padding: const EdgeInsets.all(AppPaddings.medium),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3,
-                              childAspectRatio: 2 / 3,
-                              crossAxisSpacing: AppPaddings.small,
-                              mainAxisSpacing: AppPaddings.small,
-                            ),
-                        itemCount: seriesList.length,
-                        itemBuilder: (context, index) {
-                          final series = seriesList[index];
-                          return SeriesCard(
-                            series: series,
-                            onTap: () => _openSeriesDetails(context, series),
-                          );
-                        },
+              child: FutureBuilder<List<Series>>(
+                future: _getFilteredSeries(provider.seriesList),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                        'Error: ${snapshot.error}',
+                        style: AppTextStyles.body1,
                       ),
+                    );
+                  }
+
+                  final seriesList = snapshot.data ?? [];
+
+                  if (seriesList.isEmpty) {
+                    return Center(
+                      child: Text(
+                        AppStrings.noResults,
+                        style: AppTextStyles.body1,
+                      ),
+                    );
+                  }
+
+                  // Prefetch series posters in the background
+                  _prefetchSeriesPosters(seriesList);
+
+                  return GridView.builder(
+                    padding: const EdgeInsets.all(AppPaddings.medium),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          childAspectRatio: 2 / 3,
+                          crossAxisSpacing: AppPaddings.small,
+                          mainAxisSpacing: AppPaddings.small,
+                        ),
+                    itemCount: seriesList.length,
+                    itemBuilder: (context, index) {
+                      final series = seriesList[index];
+                      return SeriesCard(
+                        series: series,
+                        onTap: () => _openSeriesDetails(context, series),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           ],
         );
@@ -172,5 +192,20 @@ class _TVShowsScreenState extends State<TVShowsScreen> {
         builder: (context) => SeriesDetailsScreen(series: series),
       ),
     );
+  }
+
+  // Prefetch series posters in the background using isolates
+  void _prefetchSeriesPosters(List<Series> seriesList) {
+    // Extract poster URLs
+    final posterUrls =
+        seriesList
+            .where((series) => series.cover.isNotEmpty)
+            .map((series) => series.cover)
+            .toList();
+
+    // Prefetch in background
+    if (posterUrls.isNotEmpty) {
+      ImageService.prefetchImages(posterUrls);
+    }
   }
 }

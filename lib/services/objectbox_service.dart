@@ -1,0 +1,357 @@
+import 'package:flutter/foundation.dart' hide Category;
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
+import '../models/category.dart';
+import '../models/channel.dart';
+import '../models/movie.dart';
+import '../models/series.dart';
+import '../objectbox.g.dart'; // This will be generated after running build_runner
+import 'objectbox_admin.dart';
+
+/// Service for managing ObjectBox database operations
+class ObjectBoxService {
+  // ObjectBox store instance
+  static late Store _store;
+
+  // Box instances for each entity
+  static late Box<Category> vodCategoriesBox;
+  static late Box<Category> seriesCategoriesBox;
+  static late Box<Category> liveCategoriesBox;
+  static late Box<Movie> moviesBox;
+  static late Box<Series> seriesBox;
+  static late Box<Channel> channelsBox;
+
+  // Flag to track if data has been preloaded
+  static bool _hasPreloadedData = false;
+  static String? _connectionId;
+
+  /// Initialize ObjectBox
+  static Future<void> init() async {
+    try {
+      debugPrint('OBJECTBOX SERVICE: Initializing ObjectBox...');
+      final appDocumentDir = await getApplicationDocumentsDirectory();
+      final databasePath = join(appDocumentDir.path, 'objectbox');
+
+      // Create the ObjectBox store
+      _store = await openStore(directory: databasePath);
+
+      // Initialize boxes
+      vodCategoriesBox = Box<Category>(_store);
+      seriesCategoriesBox = Box<Category>(_store);
+      liveCategoriesBox = Box<Category>(_store);
+      moviesBox = Box<Movie>(_store);
+      seriesBox = Box<Series>(_store);
+      channelsBox = Box<Channel>(_store);
+
+      // Initialize ObjectBox Admin interface
+      ObjectBoxAdmin.initialize(_store);
+
+      // Print the database path
+      final dbPath = databasePath;
+      debugPrint('OBJECTBOX DATABASE PATH: $dbPath');
+
+      // Check if we have preloaded data
+      checkPreloadedData();
+
+      debugPrint('OBJECTBOX SERVICE: ObjectBox initialized successfully');
+    } catch (e, stackTrace) {
+      debugPrint('OBJECTBOX SERVICE ERROR: Failed to initialize ObjectBox: $e');
+      debugPrint('OBJECTBOX SERVICE ERROR: Stack trace: $stackTrace');
+    }
+  }
+
+  /// Check if we have preloaded data
+  static void checkPreloadedData() {
+    try {
+      // We'll use the presence of data in the boxes to determine if data is preloaded
+      final hasVodCategories = vodCategoriesBox.count() > 0;
+      final hasSeriesCategories = seriesCategoriesBox.count() > 0;
+      final hasLiveCategories = liveCategoriesBox.count() > 0;
+      final hasMovies = moviesBox.count() > 0;
+      final hasSeries = seriesBox.count() > 0;
+      final hasChannels = channelsBox.count() > 0;
+
+      _hasPreloadedData =
+          hasVodCategories &&
+          hasSeriesCategories &&
+          hasLiveCategories &&
+          hasMovies &&
+          hasSeries &&
+          hasChannels;
+
+      debugPrint('OBJECTBOX SERVICE: Has preloaded data: $_hasPreloadedData');
+    } catch (e) {
+      debugPrint('OBJECTBOX SERVICE ERROR: Failed to check preloaded data: $e');
+      _hasPreloadedData = false;
+    }
+  }
+
+  /// Save VOD categories to ObjectBox
+  static Future<void> saveVodCategories(
+    List<Category> categories,
+    String connectionId,
+  ) async {
+    try {
+      debugPrint(
+        'OBJECTBOX SERVICE: Saving ${categories.length} VOD categories',
+      );
+      // Clear existing data
+      vodCategoriesBox.removeAll();
+
+      // Add new data
+      vodCategoriesBox.putMany(categories);
+
+      // Save connection ID
+      _connectionId = connectionId;
+
+      debugPrint('OBJECTBOX SERVICE: VOD categories saved successfully');
+    } catch (e) {
+      debugPrint('OBJECTBOX SERVICE ERROR: Failed to save VOD categories: $e');
+    }
+  }
+
+  /// Save Series categories to ObjectBox
+  static Future<void> saveSeriesCategories(
+    List<Category> categories,
+    String connectionId,
+  ) async {
+    try {
+      debugPrint(
+        'OBJECTBOX SERVICE: Saving ${categories.length} Series categories',
+      );
+      // Clear existing data
+      seriesCategoriesBox.removeAll();
+
+      // Add new data
+      seriesCategoriesBox.putMany(categories);
+
+      // Save connection ID
+      _connectionId = connectionId;
+
+      debugPrint('OBJECTBOX SERVICE: Series categories saved successfully');
+    } catch (e) {
+      debugPrint(
+        'OBJECTBOX SERVICE ERROR: Failed to save Series categories: $e',
+      );
+    }
+  }
+
+  /// Save Live categories to ObjectBox
+  static Future<void> saveLiveCategories(
+    List<Category> categories,
+    String connectionId,
+  ) async {
+    try {
+      debugPrint(
+        'OBJECTBOX SERVICE: Saving ${categories.length} Live categories',
+      );
+      // Clear existing data
+      liveCategoriesBox.removeAll();
+
+      // Add new data
+      liveCategoriesBox.putMany(categories);
+
+      // Save connection ID
+      _connectionId = connectionId;
+
+      debugPrint('OBJECTBOX SERVICE: Live categories saved successfully');
+    } catch (e) {
+      debugPrint('OBJECTBOX SERVICE ERROR: Failed to save Live categories: $e');
+    }
+  }
+
+  /// Save Movies to ObjectBox
+  static Future<void> saveMovies(
+    List<Movie> movies,
+    String connectionId,
+  ) async {
+    try {
+      debugPrint('OBJECTBOX SERVICE: Saving ${movies.length} Movies');
+      // Clear existing data
+      moviesBox.removeAll();
+
+      // Add new data
+      moviesBox.putMany(movies);
+
+      // Save connection ID
+      _connectionId = connectionId;
+
+      debugPrint('OBJECTBOX SERVICE: Movies saved successfully');
+    } catch (e) {
+      debugPrint('OBJECTBOX SERVICE ERROR: Failed to save Movies: $e');
+    }
+  }
+
+  /// Save Series to ObjectBox
+  static Future<void> saveSeries(
+    List<Series> series,
+    String connectionId,
+  ) async {
+    try {
+      debugPrint('OBJECTBOX SERVICE: Saving ${series.length} Series');
+      // Clear existing data
+      seriesBox.removeAll();
+
+      // Add new data
+      seriesBox.putMany(series);
+
+      // Save connection ID
+      _connectionId = connectionId;
+
+      debugPrint('OBJECTBOX SERVICE: Series saved successfully');
+    } catch (e) {
+      debugPrint('OBJECTBOX SERVICE ERROR: Failed to save Series: $e');
+    }
+  }
+
+  /// Save Channels to ObjectBox
+  static Future<void> saveChannels(
+    List<Channel> channels,
+    String connectionId,
+  ) async {
+    try {
+      debugPrint('OBJECTBOX SERVICE: Saving ${channels.length} Channels');
+      // Clear existing data
+      channelsBox.removeAll();
+
+      // Add new data
+      channelsBox.putMany(channels);
+
+      // Save connection ID
+      _connectionId = connectionId;
+
+      debugPrint('OBJECTBOX SERVICE: Channels saved successfully');
+    } catch (e) {
+      debugPrint('OBJECTBOX SERVICE ERROR: Failed to save Channels: $e');
+    }
+  }
+
+  /// Set preloaded data flag
+  static void setPreloadedDataFlag(bool value) {
+    try {
+      _hasPreloadedData = value;
+      debugPrint('OBJECTBOX SERVICE: Preloaded data flag set to $value');
+    } catch (e) {
+      debugPrint(
+        'OBJECTBOX SERVICE ERROR: Failed to set preloaded data flag: $e',
+      );
+    }
+  }
+
+  /// Check if preloaded data exists
+  static bool hasPreloadedData() {
+    return _hasPreloadedData;
+  }
+
+  /// Get connection ID
+  static String? getConnectionId() {
+    return _connectionId;
+  }
+
+  /// Save connection ID
+  static void saveConnectionId(String connectionId) {
+    try {
+      _connectionId = connectionId;
+      debugPrint('OBJECTBOX SERVICE: Connection ID saved: $connectionId');
+    } catch (e) {
+      debugPrint('OBJECTBOX SERVICE ERROR: Failed to save connection ID: $e');
+    }
+  }
+
+  /// Get VOD categories from ObjectBox
+  static List<Category> getVodCategories() {
+    try {
+      return vodCategoriesBox.getAll();
+    } catch (e) {
+      debugPrint('OBJECTBOX SERVICE ERROR: Failed to get VOD categories: $e');
+      return [];
+    }
+  }
+
+  /// Get Series categories from ObjectBox
+  static List<Category> getSeriesCategories() {
+    try {
+      return seriesCategoriesBox.getAll();
+    } catch (e) {
+      debugPrint(
+        'OBJECTBOX SERVICE ERROR: Failed to get Series categories: $e',
+      );
+      return [];
+    }
+  }
+
+  /// Get Live categories from ObjectBox
+  static List<Category> getLiveCategories() {
+    try {
+      return liveCategoriesBox.getAll();
+    } catch (e) {
+      debugPrint('OBJECTBOX SERVICE ERROR: Failed to get Live categories: $e');
+      return [];
+    }
+  }
+
+  /// Get Movies from ObjectBox
+  static List<Movie> getMovies() {
+    try {
+      return moviesBox.getAll();
+    } catch (e) {
+      debugPrint('OBJECTBOX SERVICE ERROR: Failed to get Movies: $e');
+      return [];
+    }
+  }
+
+  /// Get Series from ObjectBox
+  static List<Series> getSeries() {
+    try {
+      return seriesBox.getAll();
+    } catch (e) {
+      debugPrint('OBJECTBOX SERVICE ERROR: Failed to get Series: $e');
+      return [];
+    }
+  }
+
+  /// Get Channels from ObjectBox
+  static List<Channel> getChannels() {
+    try {
+      return channelsBox.getAll();
+    } catch (e) {
+      debugPrint('OBJECTBOX SERVICE ERROR: Failed to get Channels: $e');
+      return [];
+    }
+  }
+
+  // The updateMovie method has been removed as favorites functionality has been removed.
+
+  /// Clear all data
+  static Future<void> clearAllData() async {
+    try {
+      debugPrint('OBJECTBOX SERVICE: Clearing all data');
+      vodCategoriesBox.removeAll();
+      seriesCategoriesBox.removeAll();
+      liveCategoriesBox.removeAll();
+      moviesBox.removeAll();
+      seriesBox.removeAll();
+      channelsBox.removeAll();
+      _hasPreloadedData = false;
+      _connectionId = null;
+      debugPrint('OBJECTBOX SERVICE: All data cleared successfully');
+    } catch (e) {
+      debugPrint('OBJECTBOX SERVICE ERROR: Failed to clear all data: $e');
+    }
+  }
+
+  /// Get ObjectBox database path
+  static Future<String> getObjectBoxDatabasePath() async {
+    final appDocumentDir = await getApplicationDocumentsDirectory();
+    return join(appDocumentDir.path, 'objectbox');
+  }
+
+  /// Close the ObjectBox store and Admin interface
+  static void close() {
+    // Close the Admin interface
+    ObjectBoxAdmin.close();
+
+    // Close the store
+    _store.close();
+  }
+}

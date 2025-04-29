@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/content_provider.dart';
 import '../utils/constants.dart';
 import 'database_test_screen.dart';
-import 'hive_debug_screen.dart';
+import 'objectbox_debug_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -72,13 +72,13 @@ class SettingsScreen extends StatelessWidget {
             ),
             _buildSettingItem(
               context,
-              title: 'Hive Database Debug',
+              title: 'ObjectBox Database Debug',
               icon: Icons.data_array,
               onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const HiveDebugScreen(),
+                    builder: (context) => const ObjectBoxDebugScreen(),
                   ),
                 );
               },
@@ -211,7 +211,7 @@ class SettingsScreen extends StatelessWidget {
                     listen: false,
                   );
 
-                  // Clear Hive data but keep the connection
+                  // Clear ObjectBox data but keep the connection
                   final connection = contentProvider.currentConnection;
                   await contentProvider.clearConnection();
 

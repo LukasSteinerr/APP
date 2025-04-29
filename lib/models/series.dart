@@ -1,44 +1,22 @@
-import 'package:hive/hive.dart';
+import 'package:objectbox/objectbox.dart';
 
-part 'series.g.dart';
-
-@HiveType(typeId: 3)
+@Entity()
 class Series {
-  @HiveField(0)
-  final String seriesId;
+  @Id()
+  int id = 0;
 
-  @HiveField(1)
-  final String name;
-
-  @HiveField(2)
-  final String cover;
-
-  @HiveField(3)
-  final String plot;
-
-  @HiveField(4)
-  final String cast;
-
-  @HiveField(5)
-  final String director;
-
-  @HiveField(6)
-  final String genre;
-
-  @HiveField(7)
-  final String releaseDate;
-
-  @HiveField(8)
-  final String rating;
-
-  @HiveField(9)
-  final String categoryId;
-
-  @HiveField(10)
-  final String? tmdbId;
-
-  @HiveField(11)
-  final String? backdropPath;
+  String seriesId;
+  String name;
+  String cover;
+  String plot;
+  String cast;
+  String director;
+  String genre;
+  String releaseDate;
+  String rating;
+  String categoryId;
+  String? tmdbId;
+  String? backdropPath;
 
   Series({
     required this.seriesId,

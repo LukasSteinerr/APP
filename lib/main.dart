@@ -5,8 +5,9 @@ import 'providers/connections_provider.dart';
 import 'providers/content_provider.dart';
 import 'screens/home_screen.dart';
 import 'utils/constants.dart';
-import 'services/hive_service.dart';
+import 'services/objectbox_service.dart';
 import 'services/image_service.dart';
+import 'services/network_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,17 +20,47 @@ void main() async {
     DeviceOrientation.landscapeRight,
   ]);
 
-  // Initialize Hive
-  await HiveService.init();
+  // Initialize ObjectBox
+  await ObjectBoxService.init();
 
   // Optimize image cache settings
   ImageService.optimizeCacheSettings();
 
+  // Initialize network service
+  await NetworkService.initialize();
+
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    // Close ObjectBox when the app is closed
+    ObjectBoxService.close();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.detached) {
+      // Close ObjectBox when the app is detached
+      ObjectBoxService.close();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

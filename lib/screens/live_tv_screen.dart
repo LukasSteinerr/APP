@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../models/category.dart';
 import '../models/channel.dart';
 import '../providers/content_provider.dart';
 import '../services/data_processing_service.dart';
 import '../services/image_service.dart';
+import '../services/network_service.dart';
 import '../utils/constants.dart';
 import '../widgets/category_list.dart';
 import '../widgets/error_display.dart';
@@ -327,17 +327,44 @@ class _LiveTVScreenState extends State<LiveTVScreen>
     BuildContext context,
     Channel channel,
     ContentProvider provider,
-  ) {
-    final streamUrl = provider.getLiveStreamUrl(channel.streamId);
+  ) async {
+    try {
+      // Check if we have internet connection before trying to play
+      final hasInternet = await NetworkService.hasInternetConnection();
+      if (!hasInternet) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No internet connection. Cannot play channel.'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+        return;
+      }
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder:
-            (context) =>
-                PlayerScreen(title: channel.name, streamUrl: streamUrl),
-      ),
-    );
+      final streamUrl = provider.getLiveStreamUrl(channel.streamId);
+
+      if (context.mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder:
+                (context) =>
+                    PlayerScreen(title: channel.name, streamUrl: streamUrl),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 
   // Prefetch channel icons in the background using isolates

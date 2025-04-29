@@ -1,50 +1,24 @@
-import 'package:hive/hive.dart';
+import 'package:objectbox/objectbox.dart';
 
-part 'movie.g.dart';
-
-@HiveType(typeId: 2)
+@Entity()
 class Movie {
-  @HiveField(0)
-  final String streamId;
+  @Id()
+  int id = 0;
 
-  @HiveField(1)
-  final String name;
-
-  @HiveField(2)
-  final String streamIcon;
-
-  @HiveField(3)
-  final String containerExtension;
-
-  @HiveField(4)
-  final String categoryId;
-
-  @HiveField(5)
-  final String? rating;
-
-  @HiveField(6)
-  final String? plot;
-
-  @HiveField(7)
-  final String? releaseDate;
-
-  @HiveField(8)
-  final String? director;
-
-  @HiveField(9)
-  final String? actors;
-
-  @HiveField(10)
-  final String? backdropPath;
-
-  @HiveField(11)
-  final String? youtubeTrailer;
-
-  @HiveField(12)
-  final String? tmdbId;
-
-  @HiveField(13)
-  final String? year;
+  String streamId;
+  String name;
+  String streamIcon;
+  String containerExtension;
+  String categoryId;
+  String? rating;
+  String? plot;
+  String? releaseDate;
+  String? director;
+  String? actors;
+  String? backdropPath;
+  String? youtubeTrailer;
+  String? tmdbId;
+  String? year;
 
   Movie({
     required this.streamId,

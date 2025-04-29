@@ -185,6 +185,11 @@ class HomeScreen extends StatelessWidget {
   }
 
   void _openConnection(BuildContext context, XtreamConnection connection) {
+    final stopwatch = Stopwatch()..start();
+    debugPrint(
+      'TIMING: _openConnection started for connection: ${connection.name}',
+    );
+
     // Set the connection in the ContentProvider
     final contentProvider = Provider.of<ContentProvider>(
       context,
@@ -192,10 +197,18 @@ class HomeScreen extends StatelessWidget {
     );
     contentProvider.setConnection(connection);
 
+    debugPrint(
+      'TIMING: ContentProvider.setConnection completed in ${stopwatch.elapsedMilliseconds}ms',
+    );
+
     // Navigate to the MainScreen
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const MainScreen()),
+    );
+
+    debugPrint(
+      'TIMING: _openConnection navigation initiated in ${stopwatch.elapsedMilliseconds}ms',
     );
   }
 }

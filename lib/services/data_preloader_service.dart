@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' hide Category;
 import '../models/category.dart';
+import '../models/channel.dart';
 import '../models/movie.dart';
 import '../models/series.dart';
 import '../services/xtream_service.dart';
@@ -66,6 +67,25 @@ class DataPreloaderService {
         'PRELOADING: Received ${liveCategories.length} Live TV categories',
       );
 
+      // Preload live channels for the first category if available
+      List<Channel> liveChannels = [];
+      if (liveCategories.isNotEmpty) {
+        final firstCategoryId = liveCategories.first.categoryId;
+        debugPrint(
+          'PRELOADING: Fetching live channels for category ID: $firstCategoryId',
+        );
+        liveChannels = await _xtreamService.getLiveStreamsByCategory(
+          firstCategoryId,
+        );
+        debugPrint(
+          'PRELOADING: Received ${liveChannels.length} live channels for first category',
+        );
+      } else {
+        debugPrint(
+          'PRELOADING: No live categories available to fetch channels',
+        );
+      }
+
       debugPrint(
         '===== PRELOADING: Data preloading completed successfully =====',
       );
@@ -76,6 +96,7 @@ class DataPreloaderService {
         seriesCategories: seriesCategories,
         initialSeries: seriesList,
         liveCategories: liveCategories,
+        initialChannels: liveChannels,
       );
     } catch (e, stackTrace) {
       debugPrint('===== PRELOADING ERROR =====');
@@ -94,6 +115,7 @@ class PreloadedData {
   final List<Category> seriesCategories;
   final List<Series> initialSeries;
   final List<Category> liveCategories;
+  final List<Channel> initialChannels;
 
   PreloadedData({
     required this.vodCategories,
@@ -101,5 +123,6 @@ class PreloadedData {
     required this.seriesCategories,
     required this.initialSeries,
     required this.liveCategories,
+    required this.initialChannels,
   });
 }

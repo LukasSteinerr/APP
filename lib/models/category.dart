@@ -1,17 +1,13 @@
-import 'package:hive/hive.dart';
+import 'package:objectbox/objectbox.dart';
 
-part 'category.g.dart';
-
-@HiveType(typeId: 1)
+@Entity()
 class Category {
-  @HiveField(0)
-  final String categoryId;
+  @Id()
+  int id = 0;
 
-  @HiveField(1)
-  final String categoryName;
-
-  @HiveField(2)
-  final String parentId;
+  String categoryId;
+  String categoryName;
+  String parentId;
 
   Category({
     required this.categoryId,

@@ -40,14 +40,18 @@ dependencies:
 
   # Network and API
   http: ^1.2.1
+  connectivity_plus: ^5.0.2
 
   # Storage
   shared_preferences: ^2.2.2
   sqflite: ^2.3.2
   path: ^1.9.0
   path_provider: ^2.1.2
-  hive: ^2.2.3
-  hive_flutter: ^1.1.0
+  # ObjectBox
+  # Note: when updating objectbox, check the release notes (https://github.com/objectbox/objectbox-dart/releases)
+  # if objectbox-android-objectbrowser in android/app/build.gradle.kts has to be updated.
+  objectbox: 2.5.1
+  objectbox_flutter_libs: 2.5.1
 
   # UI components
   cached_network_image: ^3.3.1
@@ -72,9 +76,9 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
 
-  # Hive generators
+  # Code generators
   build_runner: ^2.4.8
-  hive_generator: ^2.0.1
+  objectbox_generator: ^2.5.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -88,9 +92,9 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  assets:
-    - assets/images/
-    - assets/icons/
+  # assets:
+  #   - assets/images/
+  #   - assets/icons/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

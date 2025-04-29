@@ -8,7 +8,7 @@ plugins {
 android {
     namespace = "com.example.xtream_iptv_pro"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -37,6 +37,24 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+}
+
+// Tell Gradle to exclude the Android library (without Admin)
+// that is added by the objectbox_flutter_libs package for debug builds.
+configurations {
+    named("debugImplementation") {
+        exclude(group = "io.objectbox", module = "objectbox-android")
+    }
+}
+
+// Add ObjectBox Maven repository
+repositories {
+    maven { url = uri("https://maven.objectbox.io/objectbox-3.8.0") }
+}
+
+dependencies {
+    // Update to the latest version
+    debugImplementation("io.objectbox:objectbox-android-objectbrowser:3.8.0")
 }
 
 flutter {

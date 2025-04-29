@@ -152,6 +152,10 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
                 ),
       ),
       backgroundColor: AppColors.primaryDark,
+      leading: IconButton(
+        icon: const Icon(AppIcons.back),
+        onPressed: () => Navigator.pop(context),
+      ),
     );
   }
 

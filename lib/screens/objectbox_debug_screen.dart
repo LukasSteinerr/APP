@@ -4,17 +4,17 @@ import '../models/category.dart';
 import '../models/channel.dart';
 import '../models/movie.dart';
 import '../models/series.dart';
-import '../services/hive_service.dart';
+import '../services/objectbox_service.dart';
 import '../utils/constants.dart';
 
-class HiveDebugScreen extends StatefulWidget {
-  const HiveDebugScreen({super.key});
+class ObjectBoxDebugScreen extends StatefulWidget {
+  const ObjectBoxDebugScreen({super.key});
 
   @override
-  State<HiveDebugScreen> createState() => _HiveDebugScreenState();
+  State<ObjectBoxDebugScreen> createState() => _ObjectBoxDebugScreenState();
 }
 
-class _HiveDebugScreenState extends State<HiveDebugScreen> {
+class _ObjectBoxDebugScreenState extends State<ObjectBoxDebugScreen> {
   // Data counts
   int _vodCategoriesCount = 0;
   int _seriesCategoriesCount = 0;
@@ -33,16 +33,18 @@ class _HiveDebugScreenState extends State<HiveDebugScreen> {
   }
 
   Future<void> _loadData() async {
-    // Get counts from Hive
-    final vodCategories = HiveService.getVodCategories();
-    final seriesCategories = HiveService.getSeriesCategories();
-    final liveCategories = HiveService.getLiveCategories();
-    final movies = HiveService.getMovies();
-    final series = HiveService.getSeries();
-    final channels = HiveService.getChannels();
-    final connectionId = HiveService.getConnectionId();
-    final hasPreloadedData = HiveService.hasPreloadedData();
-    final databasePath = await HiveService.getHiveDatabasePath();
+    // Get counts from ObjectBox
+    final vodCategories = ObjectBoxService.getVodCategories().cast<Category>();
+    final seriesCategories =
+        ObjectBoxService.getSeriesCategories().cast<Category>();
+    final liveCategories =
+        ObjectBoxService.getLiveCategories().cast<Category>();
+    final movies = ObjectBoxService.getMovies().cast<Movie>();
+    final series = ObjectBoxService.getSeries().cast<Series>();
+    final channels = ObjectBoxService.getChannels().cast<Channel>();
+    final connectionId = ObjectBoxService.getConnectionId();
+    final hasPreloadedData = ObjectBoxService.hasPreloadedData();
+    final databasePath = await ObjectBoxService.getObjectBoxDatabasePath();
 
     setState(() {
       _vodCategoriesCount = vodCategories.length;
@@ -61,7 +63,7 @@ class _HiveDebugScreenState extends State<HiveDebugScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Hive Database Debug'),
+        title: const Text('ObjectBox Database Debug'),
         backgroundColor: AppColors.primaryDark,
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
@@ -153,7 +155,7 @@ class _HiveDebugScreenState extends State<HiveDebugScreen> {
                               (context) => AlertDialog(
                                 title: const Text('Clear All Data'),
                                 content: const Text(
-                                  'Are you sure you want to clear all Hive data? This action cannot be undone.',
+                                  'Are you sure you want to clear all ObjectBox data? This action cannot be undone.',
                                 ),
                                 actions: [
                                   TextButton(
@@ -174,13 +176,13 @@ class _HiveDebugScreenState extends State<HiveDebugScreen> {
                         );
 
                         if (confirmed == true) {
-                          await HiveService.clearAllData();
+                          await ObjectBoxService.clearAllData();
                           await _loadData();
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text(
-                                  'All Hive data cleared successfully',
+                                  'All ObjectBox data cleared successfully',
                                 ),
                               ),
                             );
@@ -253,31 +255,49 @@ class _HiveDebugScreenState extends State<HiveDebugScreen> {
             const Divider(),
             ExpansionTile(
               title: const Text('VOD Categories'),
-              children: [_buildCategorySamples(HiveService.getVodCategories())],
+              children: [
+                _buildCategorySamples(
+                  ObjectBoxService.getVodCategories().cast<Category>(),
+                ),
+              ],
             ),
             ExpansionTile(
               title: const Text('Movies'),
-              children: [_buildMovieSamples(HiveService.getMovies())],
+              children: [
+                _buildMovieSamples(ObjectBoxService.getMovies().cast<Movie>()),
+              ],
             ),
             ExpansionTile(
               title: const Text('Series Categories'),
               children: [
-                _buildCategorySamples(HiveService.getSeriesCategories()),
+                _buildCategorySamples(
+                  ObjectBoxService.getSeriesCategories().cast<Category>(),
+                ),
               ],
             ),
             ExpansionTile(
               title: const Text('Series'),
-              children: [_buildSeriesSamples(HiveService.getSeries())],
+              children: [
+                _buildSeriesSamples(
+                  ObjectBoxService.getSeries().cast<Series>(),
+                ),
+              ],
             ),
             ExpansionTile(
               title: const Text('Live Categories'),
               children: [
-                _buildCategorySamples(HiveService.getLiveCategories()),
+                _buildCategorySamples(
+                  ObjectBoxService.getLiveCategories().cast<Category>(),
+                ),
               ],
             ),
             ExpansionTile(
               title: const Text('Channels'),
-              children: [_buildChannelSamples(HiveService.getChannels())],
+              children: [
+                _buildChannelSamples(
+                  ObjectBoxService.getChannels().cast<Channel>(),
+                ),
+              ],
             ),
           ],
         ),

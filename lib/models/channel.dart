@@ -1,26 +1,16 @@
-import 'package:hive/hive.dart';
+import 'package:objectbox/objectbox.dart';
 
-part 'channel.g.dart';
-
-@HiveType(typeId: 4)
+@Entity()
 class Channel {
-  @HiveField(0)
-  final String streamId;
+  @Id()
+  int id = 0;
 
-  @HiveField(1)
-  final String name;
-
-  @HiveField(2)
-  final String streamIcon;
-
-  @HiveField(3)
-  final String epgChannelId;
-
-  @HiveField(4)
-  final String categoryId;
-
-  @HiveField(5)
-  final bool hasTvArchive;
+  String streamId;
+  String name;
+  String streamIcon;
+  String epgChannelId;
+  String categoryId;
+  bool hasTvArchive;
 
   Channel({
     required this.streamId,

@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/category.dart';
 import '../models/movie.dart';
 import '../providers/content_provider.dart';
 import '../services/data_processing_service.dart';
 import '../services/image_service.dart';
-import '../services/tmdb_service.dart';
 import '../utils/constants.dart';
 import '../widgets/category_list.dart';
 import '../widgets/error_display.dart';

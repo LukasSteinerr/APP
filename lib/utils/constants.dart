@@ -104,6 +104,7 @@ class AppStrings {
   static const String liveTV = 'Live TV';
   static const String movies = 'Movies';
   static const String tvShows = 'TV Shows';
+  static const String favorites = 'Favorites';
   static const String settings = 'Settings';
   static const String addConnection = 'Add Connection';
   static const String editConnection = 'Edit Connection';

@@ -6,7 +6,6 @@ import 'live_tv_screen.dart';
 import 'movies_screen.dart';
 import 'tv_shows_screen.dart';
 import 'settings_screen.dart';
-import '../widgets/loading_overlay.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -33,6 +32,8 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
 
+    final stopwatch = Stopwatch()..start();
+    debugPrint('TIMING: MainScreen.initState started');
     debugPrint('MAIN SCREEN: Initializing screens');
 
     // Initialize screens - use IndexedStack to preserve state
@@ -45,11 +46,17 @@ class _MainScreenState extends State<MainScreen> {
 
     _initialized = true;
     debugPrint('MAIN SCREEN: Initialization complete');
+    debugPrint(
+      'TIMING: MainScreen.initState completed in ${stopwatch.elapsedMilliseconds}ms',
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final stopwatch = Stopwatch()..start();
+    debugPrint('TIMING: MainScreen.build started');
     debugPrint('MAIN SCREEN: Building MainScreen');
+
     final contentProvider = Provider.of<ContentProvider>(context);
     final connection = contentProvider.currentConnection;
 
@@ -67,8 +74,11 @@ class _MainScreenState extends State<MainScreen> {
     }
 
     debugPrint('MAIN SCREEN: Building with connection: ${connection.name}');
+    debugPrint(
+      'TIMING: MainScreen.build content provider access completed in ${stopwatch.elapsedMilliseconds}ms',
+    );
 
-    return Scaffold(
+    final scaffold = Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text('${connection.name} - ${_titles[_currentIndex]}'),
@@ -118,5 +128,10 @@ class _MainScreenState extends State<MainScreen> {
         ],
       ),
     );
+
+    debugPrint(
+      'TIMING: MainScreen.build completed in ${stopwatch.elapsedMilliseconds}ms',
+    );
+    return scaffold;
   }
 }

@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import '../models/channel.dart';
 import '../models/movie.dart';
 import '../models/series.dart';

@@ -156,11 +156,6 @@
           "id": "15:7539576128831795833",
           "name": "year",
           "type": 9
-        },
-        {
-          "id": "16:945473941763871377",
-          "name": "isFavorite",
-          "type": 1
         }
       ],
       "relations": []
@@ -306,7 +301,9 @@
   "modelVersionParserMinimum": 5,
   "retiredEntityUids": [],
   "retiredIndexUids": [],
-  "retiredPropertyUids": [],
+  "retiredPropertyUids": [
+    945473941763871377
+  ],
   "retiredRelationUids": [],
   "version": 1
 }

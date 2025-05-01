@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import '../models/xtream_connection.dart';
-import '../services/storage_service.dart';
+import '../services/connection_storage_service.dart';
 
 class ConnectionsProvider with ChangeNotifier {
-  final StorageService _storageService = StorageService();
+  final ConnectionStorageService _storageService = ConnectionStorageService();
   List<XtreamConnection> _connections = [];
   bool _isLoading = false;
   String? _error;
@@ -97,7 +97,7 @@ class ConnectionsProvider with ChangeNotifier {
 
   Future<bool> deleteAllConnections() async {
     try {
-      final success = await _storageService.deleteAllConnections();
+      final success = await _storageService.deleteAllXtreamConnections();
 
       if (success) {
         await loadConnections();

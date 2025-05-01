@@ -5,6 +5,7 @@ import '../models/category.dart';
 import '../models/channel.dart';
 import '../models/movie.dart';
 import '../models/series.dart';
+import '../models/xtream_connection.dart';
 import '../objectbox.g.dart'; // This will be generated after running build_runner
 import 'objectbox_admin.dart';
 
@@ -20,6 +21,7 @@ class ObjectBoxService {
   static late Box<Movie> moviesBox;
   static late Box<Series> seriesBox;
   static late Box<Channel> channelsBox;
+  static late Box<XtreamConnection> connectionsBox;
 
   // Flag to track if data has been preloaded
   static bool _hasPreloadedData = false;
@@ -42,6 +44,7 @@ class ObjectBoxService {
       moviesBox = Box<Movie>(_store);
       seriesBox = Box<Series>(_store);
       channelsBox = Box<Channel>(_store);
+      connectionsBox = Box<XtreamConnection>(_store);
 
       // Initialize ObjectBox Admin interface
       ObjectBoxAdmin.initialize(_store);
@@ -332,6 +335,7 @@ class ObjectBoxService {
       moviesBox.removeAll();
       seriesBox.removeAll();
       channelsBox.removeAll();
+      connectionsBox.removeAll();
       _hasPreloadedData = false;
       _connectionId = null;
       debugPrint('OBJECTBOX SERVICE: All data cleared successfully');
@@ -344,6 +348,180 @@ class ObjectBoxService {
   static Future<String> getObjectBoxDatabasePath() async {
     final appDocumentDir = await getApplicationDocumentsDirectory();
     return join(appDocumentDir.path, 'objectbox');
+  }
+
+  /// Save a connection to ObjectBox
+  static Future<bool> saveConnection(XtreamConnection connection) async {
+    try {
+      debugPrint('OBJECTBOX SERVICE: Saving connection: ${connection.name}');
+
+      // Check if connection with this ID already exists
+      final query =
+          connectionsBox
+              .query(XtreamConnection_.id.equals(connection.id))
+              .build();
+      final existingConnections = query.find();
+      query.close();
+
+      if (existingConnections.isNotEmpty) {
+        // Update existing connection
+        connection.obId = existingConnections.first.obId;
+      }
+
+      // Save the connection
+      connectionsBox.put(connection);
+
+      debugPrint('OBJECTBOX SERVICE: Connection saved successfully');
+      return true;
+    } catch (e) {
+      debugPrint('OBJECTBOX SERVICE ERROR: Failed to save connection: $e');
+      return false;
+    }
+  }
+
+  /// Get all connections from ObjectBox
+  static List<XtreamConnection> getConnections() {
+    try {
+      return connectionsBox.getAll();
+    } catch (e) {
+      debugPrint('OBJECTBOX SERVICE ERROR: Failed to get connections: $e');
+      return [];
+    }
+  }
+
+  /// Delete a connection from ObjectBox and clear its associated content data
+  static Future<bool> deleteConnection(String id) async {
+    try {
+      debugPrint('OBJECTBOX SERVICE: Deleting connection with ID: $id');
+
+      // Find the connection with the given ID
+      final query =
+          connectionsBox.query(XtreamConnection_.id.equals(id)).build();
+      final connections = query.find();
+      query.close();
+
+      if (connections.isNotEmpty) {
+        // Check if this is the current active connection
+        final currentConnectionId = getConnectionId();
+        final isCurrentConnection = currentConnectionId == id;
+
+        // Always clear content data for the connection being deleted
+        debugPrint(
+          'OBJECTBOX SERVICE: Clearing content data for connection: $id',
+        );
+
+        if (isCurrentConnection) {
+          // If this is the current connection, clear all content data
+          vodCategoriesBox.removeAll();
+          seriesCategoriesBox.removeAll();
+          liveCategoriesBox.removeAll();
+          moviesBox.removeAll();
+          seriesBox.removeAll();
+          channelsBox.removeAll();
+
+          // Reset preloaded data flag and connection ID
+          _hasPreloadedData = false;
+          _connectionId = null;
+
+          debugPrint(
+            'OBJECTBOX SERVICE: Content data cleared for current connection: $id',
+          );
+        } else {
+          // If this is not the current connection, we need to:
+          // 1. Save the current connection's data temporarily (if any)
+          // 2. Clear all data
+          // 3. Restore the current connection's data (if any)
+
+          List<Category> tempVodCategories = [];
+          List<Category> tempSeriesCategories = [];
+          List<Category> tempLiveCategories = [];
+          List<Movie> tempMovies = [];
+          List<Series> tempSeries = [];
+          List<Channel> tempChannels = [];
+
+          // Only save current data if we have a current connection
+          if (currentConnectionId != null) {
+            debugPrint(
+              'OBJECTBOX SERVICE: Temporarily saving current connection data',
+            );
+            tempVodCategories = vodCategoriesBox.getAll();
+            tempSeriesCategories = seriesCategoriesBox.getAll();
+            tempLiveCategories = liveCategoriesBox.getAll();
+            tempMovies = moviesBox.getAll();
+            tempSeries = seriesBox.getAll();
+            tempChannels = channelsBox.getAll();
+          }
+
+          // Clear all data
+          vodCategoriesBox.removeAll();
+          seriesCategoriesBox.removeAll();
+          liveCategoriesBox.removeAll();
+          moviesBox.removeAll();
+          seriesBox.removeAll();
+          channelsBox.removeAll();
+
+          // Restore current connection data if needed
+          if (currentConnectionId != null && tempVodCategories.isNotEmpty) {
+            debugPrint('OBJECTBOX SERVICE: Restoring current connection data');
+            vodCategoriesBox.putMany(tempVodCategories);
+            seriesCategoriesBox.putMany(tempSeriesCategories);
+            liveCategoriesBox.putMany(tempLiveCategories);
+            moviesBox.putMany(tempMovies);
+            seriesBox.putMany(tempSeries);
+            channelsBox.putMany(tempChannels);
+          }
+
+          debugPrint(
+            'OBJECTBOX SERVICE: Content data cleared for non-current connection: $id',
+          );
+        }
+
+        // Remove the connection
+        connectionsBox.remove(connections.first.obId);
+        debugPrint('OBJECTBOX SERVICE: Connection deleted successfully');
+        return true;
+      } else {
+        debugPrint('OBJECTBOX SERVICE: Connection not found with ID: $id');
+        return false;
+      }
+    } catch (e) {
+      debugPrint('OBJECTBOX SERVICE ERROR: Failed to delete connection: $e');
+      return false;
+    }
+  }
+
+  /// Delete all connections from ObjectBox and clear all content data
+  static Future<bool> deleteAllConnections() async {
+    try {
+      debugPrint(
+        'OBJECTBOX SERVICE: Deleting all connections and clearing all content data',
+      );
+
+      // Clear all content data
+      vodCategoriesBox.removeAll();
+      seriesCategoriesBox.removeAll();
+      liveCategoriesBox.removeAll();
+      moviesBox.removeAll();
+      seriesBox.removeAll();
+      channelsBox.removeAll();
+
+      // Reset preloaded data flag and connection ID
+      _hasPreloadedData = false;
+      _connectionId = null;
+
+      // Remove all connections
+      connectionsBox.removeAll();
+
+      debugPrint(
+        'OBJECTBOX SERVICE: All connections and content data deleted successfully',
+      );
+      return true;
+    } catch (e) {
+      debugPrint(
+        'OBJECTBOX SERVICE ERROR: Failed to delete all connections: $e',
+      );
+      return false;
+    }
   }
 
   /// Close the ObjectBox store and Admin interface

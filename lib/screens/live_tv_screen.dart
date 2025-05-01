@@ -3,14 +3,12 @@ import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/channel.dart';
 import '../providers/content_provider.dart';
-import '../services/data_processing_service.dart';
-import '../services/image_service.dart';
 import '../services/network_service.dart';
+import '../services/objectbox_service.dart';
 import '../utils/constants.dart';
-import '../widgets/category_list.dart';
 import '../widgets/error_display.dart';
 import '../widgets/loading_indicator.dart';
-import '../widgets/simple_placeholder.dart';
+import '../widgets/content_carousel.dart';
 import 'player_screen.dart';
 
 class LiveTVScreen extends StatefulWidget {
@@ -22,10 +20,10 @@ class LiveTVScreen extends StatefulWidget {
 
 class _LiveTVScreenState extends State<LiveTVScreen>
     with AutomaticKeepAliveClientMixin {
-  String? _selectedCategoryId;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
   bool _initialLoadComplete = false;
+  Map<String, List<Channel>> _channelsByCategory = {};
 
   @override
   bool get wantKeepAlive => true; // Keep this widget alive when switching tabs
@@ -34,9 +32,6 @@ class _LiveTVScreenState extends State<LiveTVScreen>
   void initState() {
     super.initState();
     debugPrint('LIVE TV SCREEN: Initializing');
-
-    // Optimize image cache settings
-    ImageService.optimizeCacheSettings();
 
     // Use addPostFrameCallback to ensure the widget is fully built before updating state
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -55,34 +50,13 @@ class _LiveTVScreenState extends State<LiveTVScreen>
       debugPrint(
         'LIVE TV SCREEN: liveCategories count = ${provider.liveCategories.length}',
       );
-      debugPrint(
-        'LIVE TV SCREEN: liveChannels count = ${provider.liveChannels.length}',
-      );
 
-      // Only load categories if we don't have preloaded data
-      if (!provider.hasPreloadedData) {
-        debugPrint('LIVE TV SCREEN: No preloaded data, loading categories');
-        _loadCategories().then((_) {
-          setState(() {
-            _initialLoadComplete = true;
-          });
-        });
-      } else if (provider.liveCategories.isNotEmpty) {
-        // If we have preloaded data, load channels
-        debugPrint('LIVE TV SCREEN: Using preloaded data, loading channels');
-        _loadChannels().then((_) {
-          setState(() {
-            _initialLoadComplete = true;
-          });
-        });
-      } else {
-        debugPrint(
-          'LIVE TV SCREEN: No categories available, even with preloaded data',
-        );
+      // Load all channels for all categories
+      _loadAllChannels().then((_) {
         setState(() {
           _initialLoadComplete = true;
         });
-      }
+      });
     });
   }
 
@@ -92,47 +66,44 @@ class _LiveTVScreenState extends State<LiveTVScreen>
     super.dispose();
   }
 
-  Future<void> _loadCategories() async {
-    debugPrint('LIVE TV SCREEN: Loading live categories');
+  Future<void> _loadAllChannels() async {
+    debugPrint('LIVE TV SCREEN: Loading all channels for all categories');
     final provider = Provider.of<ContentProvider>(context, listen: false);
+
+    // If we have preloaded data, use it
+    if (provider.hasPreloadedData) {
+      _organizeChannelsByCategory();
+      return;
+    }
+
+    // Otherwise, load categories and then channels
     await provider.loadLiveCategories();
-    debugPrint(
-      'LIVE TV SCREEN: Loaded ${provider.liveCategories.length} live categories',
-    );
 
-    if (provider.liveCategories.isNotEmpty) {
-      debugPrint('LIVE TV SCREEN: Categories loaded, now loading channels');
-      await _loadChannels();
-    } else {
+    if (provider.liveCategories.isEmpty) {
       debugPrint('LIVE TV SCREEN: No live categories available');
+      return;
     }
+
+    // Load all channels from the database
+    _organizeChannelsByCategory();
   }
 
-  Future<void> _loadChannels() async {
-    debugPrint('LIVE TV SCREEN: Loading channels');
-    final provider = Provider.of<ContentProvider>(context, listen: false);
+  void _organizeChannelsByCategory() {
+    // Get all channels from the database
+    final allChannels = ObjectBoxService.getChannels().cast<Channel>();
 
-    if (_selectedCategoryId != null) {
-      debugPrint(
-        'LIVE TV SCREEN: Loading channels for selected category: $_selectedCategoryId',
-      );
-      await provider.loadLiveChannelsByCategory(_selectedCategoryId!);
-    } else {
-      debugPrint('LIVE TV SCREEN: Loading all live channels');
-      await provider.loadAllLiveChannels();
+    // Group channels by category
+    _channelsByCategory = {};
+    for (final channel in allChannels) {
+      if (!_channelsByCategory.containsKey(channel.categoryId)) {
+        _channelsByCategory[channel.categoryId] = [];
+      }
+      _channelsByCategory[channel.categoryId]!.add(channel);
     }
 
     debugPrint(
-      'LIVE TV SCREEN: Loaded ${provider.liveChannels.length} channels',
+      'LIVE TV SCREEN: Organized channels into ${_channelsByCategory.length} categories',
     );
-  }
-
-  void _onCategorySelected(String categoryId) {
-    debugPrint('LIVE TV SCREEN: Category selected: $categoryId');
-    setState(() {
-      _selectedCategoryId = categoryId.isEmpty ? null : categoryId;
-    });
-    _loadChannels();
   }
 
   void _onSearchChanged(String query) {
@@ -141,9 +112,12 @@ class _LiveTVScreenState extends State<LiveTVScreen>
     });
   }
 
-  Future<List<Channel>> _getFilteredChannels(List<Channel> channels) async {
-    // Use isolate for filtering channels
-    return await DataProcessingService.filterChannels(channels, _searchQuery);
+  List<Channel> _getFilteredChannels(List<Channel> channels) {
+    if (_searchQuery.isEmpty) return channels;
+
+    return channels
+        .where((channel) => channel.name.toLowerCase().contains(_searchQuery))
+        .toList();
   }
 
   @override
@@ -160,13 +134,83 @@ class _LiveTVScreenState extends State<LiveTVScreen>
         if (provider.error != null) {
           return ErrorDisplay(
             errorMessage: provider.error!,
-            onRetry: _loadCategories,
+            onRetry: _loadAllChannels,
           );
         }
 
         final categories = provider.liveCategories;
 
-        // Use FutureBuilder to handle the async filtering
+        if (!_initialLoadComplete) {
+          return const LoadingIndicator(message: "Loading channels...");
+        }
+
+        // If search query is not empty, show filtered results
+        if (_searchQuery.isNotEmpty) {
+          // Flatten all channels from all categories
+          final allChannels =
+              _channelsByCategory.values
+                  .expand((channels) => channels)
+                  .toList();
+          final filteredChannels = _getFilteredChannels(allChannels);
+
+          return Column(
+            children: [
+              // Search Bar
+              Padding(
+                padding: const EdgeInsets.all(AppPaddings.medium),
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: AppStrings.search,
+                    prefixIcon: const Icon(AppIcons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        AppBorderRadius.medium,
+                      ),
+                    ),
+                    filled: true,
+                    fillColor: AppColors.card,
+                  ),
+                  style: AppTextStyles.body1,
+                  onChanged: _onSearchChanged,
+                ),
+              ),
+
+              // Search results
+              Expanded(
+                child:
+                    filteredChannels.isEmpty
+                        ? Center(
+                          child: Text(
+                            AppStrings.noResults,
+                            style: AppTextStyles.body1,
+                          ),
+                        )
+                        : GridView.builder(
+                          padding: const EdgeInsets.all(AppPaddings.medium),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                childAspectRatio: 16 / 9,
+                                crossAxisSpacing: AppPaddings.medium,
+                                mainAxisSpacing: AppPaddings.medium,
+                              ),
+                          itemCount: filteredChannels.length,
+                          itemBuilder: (context, index) {
+                            final channel = filteredChannels[index];
+                            return _buildChannelCard(
+                              context,
+                              channel,
+                              provider,
+                            );
+                          },
+                        ),
+              ),
+            ],
+          );
+        }
+
+        // Show category carousels
         return Column(
           children: [
             // Search Bar
@@ -188,67 +232,35 @@ class _LiveTVScreenState extends State<LiveTVScreen>
               ),
             ),
 
-            // Categories
-            if (categories.isNotEmpty)
-              CategoryList(
-                categories: categories,
-                selectedCategoryId: _selectedCategoryId,
-                onCategorySelected: _onCategorySelected,
-              ),
-
-            // Channels with FutureBuilder
+            // Category Carousels
             Expanded(
-              child: FutureBuilder<List<Channel>>(
-                future: _getFilteredChannels(provider.liveChannels),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
+              child:
+                  _channelsByCategory.isEmpty
+                      ? const Center(child: Text('No channels available'))
+                      : ListView.builder(
+                        itemCount: categories.length,
+                        itemBuilder: (context, index) {
+                          final category = categories[index];
+                          final channels =
+                              _channelsByCategory[category.categoryId] ?? [];
 
-                  if (snapshot.hasError) {
-                    return Center(
-                      child: Text(
-                        'Error: ${snapshot.error}',
-                        style: AppTextStyles.body1,
+                          if (channels.isEmpty) {
+                            return const SizedBox.shrink();
+                          }
+
+                          return ContentCarousel(
+                            title: category.categoryName,
+                            items: channels,
+                            onItemTap:
+                                (channel) => _openChannel(
+                                  context,
+                                  channel as Channel,
+                                  provider,
+                                ),
+                            contentType: ContentType.liveTV,
+                          );
+                        },
                       ),
-                    );
-                  }
-
-                  final channels = snapshot.data ?? [];
-
-                  if (channels.isEmpty) {
-                    return Center(
-                      child: Text(
-                        AppStrings.noResults,
-                        style: AppTextStyles.body1,
-                      ),
-                    );
-                  }
-
-                  // Prefetch channel icons in the background
-                  _prefetchChannelIcons(channels);
-
-                  return GridView.builder(
-                    padding: const EdgeInsets.all(AppPaddings.medium),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 16 / 9,
-                          crossAxisSpacing: AppPaddings.medium,
-                          mainAxisSpacing: AppPaddings.medium,
-                        ),
-                    // Use caching for better performance
-                    cacheExtent: 500, // Cache more items for smoother scrolling
-                    addAutomaticKeepAlives: true,
-                    itemCount: channels.length,
-                    itemBuilder: (context, index) {
-                      // Only build channel cards that are visible or about to be visible
-                      final channel = channels[index];
-                      return _buildChannelCard(context, channel, provider);
-                    },
-                  );
-                },
-              ),
             ),
           ],
         );
@@ -286,8 +298,9 @@ class _LiveTVScreenState extends State<LiveTVScreen>
                           memCacheHeight: 120,
                           fadeInDuration: const Duration(milliseconds: 200),
                           placeholder:
-                              (context, url) =>
-                                  const Center(child: SimplePlaceholder()),
+                              (context, url) => const Center(
+                                child: CircularProgressIndicator(),
+                              ),
                           errorWidget:
                               (context, url, error) => const Center(
                                 child: Icon(
@@ -364,27 +377,6 @@ class _LiveTVScreenState extends State<LiveTVScreen>
           ),
         );
       }
-    }
-  }
-
-  // Prefetch channel icons in the background using isolates
-  void _prefetchChannelIcons(List<Channel> channels) {
-    // Only prefetch a limited number of images to avoid memory issues
-    final visibleChannels = channels.take(20).toList();
-
-    // Extract icon URLs
-    final iconUrls =
-        visibleChannels
-            .where((channel) => channel.streamIcon.isNotEmpty)
-            .map((channel) => channel.streamIcon)
-            .toList();
-
-    // Prefetch in background
-    if (iconUrls.isNotEmpty) {
-      // Use a microtask to avoid blocking the UI
-      Future.microtask(() {
-        ImageService.prefetchImages(iconUrls);
-      });
     }
   }
 }

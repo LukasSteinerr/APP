@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/movie.dart';
 import '../providers/content_provider.dart';
-import '../services/data_processing_service.dart';
-import '../services/image_service.dart';
+import '../services/objectbox_service.dart';
 import '../utils/constants.dart';
-import '../widgets/category_list.dart';
 import '../widgets/error_display.dart';
 import '../widgets/loading_indicator.dart';
-import '../widgets/movie_card.dart';
+import '../widgets/content_carousel.dart';
 import 'movie_details_screen.dart';
 
 class MoviesScreen extends StatefulWidget {
@@ -20,10 +18,10 @@ class MoviesScreen extends StatefulWidget {
 
 class _MoviesScreenState extends State<MoviesScreen>
     with AutomaticKeepAliveClientMixin {
-  String? _selectedCategoryId;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
   bool _initialLoadComplete = false;
+  Map<String, List<Movie>> _moviesByCategory = {};
 
   @override
   bool get wantKeepAlive => true; // Keep this widget alive when switching tabs
@@ -50,34 +48,13 @@ class _MoviesScreenState extends State<MoviesScreen>
       debugPrint(
         'MOVIES SCREEN: vodCategories count = ${provider.vodCategories.length}',
       );
-      debugPrint('MOVIES SCREEN: movies count = ${provider.movies.length}');
 
-      // Only load categories if we don't have preloaded data
-      if (!provider.hasPreloadedData) {
-        debugPrint('MOVIES SCREEN: No preloaded data, loading categories');
-        _loadCategories().then((_) {
-          setState(() {
-            _initialLoadComplete = true;
-          });
-        });
-      } else if (provider.vodCategories.isNotEmpty) {
-        // If we have preloaded data, just set the selected category
-        debugPrint(
-          'MOVIES SCREEN: Using preloaded data, setting selected category',
-        );
-        setState(() {
-          _selectedCategoryId = provider.vodCategories.first.categoryId;
-          _initialLoadComplete = true;
-        });
-        debugPrint('MOVIES SCREEN: Selected category ID: $_selectedCategoryId');
-      } else {
-        debugPrint(
-          'MOVIES SCREEN: No categories available, even with preloaded data',
-        );
+      // Load all movies for all categories
+      _loadAllMovies().then((_) {
         setState(() {
           _initialLoadComplete = true;
         });
-      }
+      });
     });
   }
 
@@ -87,51 +64,44 @@ class _MoviesScreenState extends State<MoviesScreen>
     super.dispose();
   }
 
-  Future<void> _loadCategories() async {
-    debugPrint('MOVIES SCREEN: Loading VOD categories');
+  Future<void> _loadAllMovies() async {
+    debugPrint('MOVIES SCREEN: Loading all movies for all categories');
     final provider = Provider.of<ContentProvider>(context, listen: false);
+
+    // If we have preloaded data, use it
+    if (provider.hasPreloadedData) {
+      _organizeMoviesByCategory();
+      return;
+    }
+
+    // Otherwise, load categories and then movies
     await provider.loadVodCategories();
-    debugPrint(
-      'MOVIES SCREEN: Loaded ${provider.vodCategories.length} VOD categories',
-    );
 
-    if (provider.vodCategories.isNotEmpty) {
-      debugPrint('MOVIES SCREEN: Categories loaded, now loading movies');
-      await _loadMovies();
-    } else {
+    if (provider.vodCategories.isEmpty) {
       debugPrint('MOVIES SCREEN: No VOD categories available');
-    }
-  }
-
-  Future<void> _loadMovies() async {
-    debugPrint('MOVIES SCREEN: Loading movies');
-    final provider = Provider.of<ContentProvider>(context, listen: false);
-
-    if (_selectedCategoryId != null) {
-      debugPrint(
-        'MOVIES SCREEN: Loading movies for selected category: $_selectedCategoryId',
-      );
-      await provider.loadMoviesByCategory(_selectedCategoryId!);
-    } else if (provider.vodCategories.isNotEmpty) {
-      // Load movies from the first category if none is selected
-      final firstCategoryId = provider.vodCategories.first.categoryId;
-      debugPrint(
-        'MOVIES SCREEN: Loading movies for first category: $firstCategoryId',
-      );
-      await provider.loadMoviesByCategory(firstCategoryId);
-    } else {
-      debugPrint('MOVIES SCREEN: Cannot load movies - no categories available');
+      return;
     }
 
-    debugPrint('MOVIES SCREEN: Loaded ${provider.movies.length} movies');
+    // Load all movies from the database
+    _organizeMoviesByCategory();
   }
 
-  void _onCategorySelected(String categoryId) {
-    debugPrint('MOVIES SCREEN: Category selected: $categoryId');
-    setState(() {
-      _selectedCategoryId = categoryId.isEmpty ? null : categoryId;
-    });
-    _loadMovies();
+  void _organizeMoviesByCategory() {
+    // Get all movies from the database
+    final allMovies = ObjectBoxService.getMovies().cast<Movie>();
+
+    // Group movies by category
+    _moviesByCategory = {};
+    for (final movie in allMovies) {
+      if (!_moviesByCategory.containsKey(movie.categoryId)) {
+        _moviesByCategory[movie.categoryId] = [];
+      }
+      _moviesByCategory[movie.categoryId]!.add(movie);
+    }
+
+    debugPrint(
+      'MOVIES SCREEN: Organized movies into ${_moviesByCategory.length} categories',
+    );
   }
 
   void _onSearchChanged(String query) {
@@ -140,9 +110,17 @@ class _MoviesScreenState extends State<MoviesScreen>
     });
   }
 
-  Future<List<Movie>> _getFilteredMovies(List<Movie> movies) async {
-    // Use isolate for filtering movies
-    return await DataProcessingService.filterMovies(movies, _searchQuery);
+  List<Movie> _getFilteredMovies(List<Movie> movies) {
+    if (_searchQuery.isEmpty) return movies;
+
+    return movies
+        .where(
+          (movie) =>
+              movie.name.toLowerCase().contains(_searchQuery) ||
+              (movie.plot?.toLowerCase().contains(_searchQuery) ?? false) ||
+              (movie.actors?.toLowerCase().contains(_searchQuery) ?? false),
+        )
+        .toList();
   }
 
   @override
@@ -159,12 +137,132 @@ class _MoviesScreenState extends State<MoviesScreen>
         if (provider.error != null) {
           return ErrorDisplay(
             errorMessage: provider.error!,
-            onRetry: _loadCategories,
+            onRetry: _loadAllMovies,
           );
         }
 
         final categories = provider.vodCategories;
 
+        if (!_initialLoadComplete) {
+          return const LoadingIndicator(message: "Loading movies...");
+        }
+
+        // If search query is not empty, show filtered results
+        if (_searchQuery.isNotEmpty) {
+          // Flatten all movies from all categories
+          final allMovies =
+              _moviesByCategory.values.expand((movies) => movies).toList();
+          final filteredMovies = _getFilteredMovies(allMovies);
+
+          return Column(
+            children: [
+              // Search Bar
+              Padding(
+                padding: const EdgeInsets.all(AppPaddings.medium),
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: AppStrings.search,
+                    prefixIcon: const Icon(AppIcons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        AppBorderRadius.medium,
+                      ),
+                    ),
+                    filled: true,
+                    fillColor: AppColors.card,
+                  ),
+                  style: AppTextStyles.body1,
+                  onChanged: _onSearchChanged,
+                ),
+              ),
+
+              // Search results
+              Expanded(
+                child:
+                    filteredMovies.isEmpty
+                        ? Center(
+                          child: Text(
+                            AppStrings.noResults,
+                            style: AppTextStyles.body1,
+                          ),
+                        )
+                        : GridView.builder(
+                          padding: const EdgeInsets.all(AppPaddings.medium),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 3,
+                                childAspectRatio: 2 / 3,
+                                crossAxisSpacing: AppPaddings.small,
+                                mainAxisSpacing: AppPaddings.small,
+                              ),
+                          itemCount: filteredMovies.length,
+                          itemBuilder: (context, index) {
+                            final movie = filteredMovies[index];
+                            return GestureDetector(
+                              onTap:
+                                  () => _openMovieDetails(
+                                    context,
+                                    movie,
+                                    provider,
+                                  ),
+                              child: Card(
+                                clipBehavior: Clip.antiAlias,
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    Expanded(
+                                      child:
+                                          movie.streamIcon.isNotEmpty
+                                              ? Image.network(
+                                                movie.streamIcon,
+                                                fit: BoxFit.cover,
+                                                errorBuilder:
+                                                    (
+                                                      context,
+                                                      error,
+                                                      stackTrace,
+                                                    ) => const Center(
+                                                      child: Icon(
+                                                        AppIcons.movies,
+                                                        size: 40,
+                                                        color:
+                                                            AppColors.primary,
+                                                      ),
+                                                    ),
+                                              )
+                                              : const Center(
+                                                child: Icon(
+                                                  AppIcons.movies,
+                                                  size: 40,
+                                                  color: AppColors.primary,
+                                                ),
+                                              ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.all(
+                                        AppPaddings.small,
+                                      ),
+                                      child: Text(
+                                        movie.name,
+                                        style: AppTextStyles.body2,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+              ),
+            ],
+          );
+        }
+
+        // Show category carousels
         return Column(
           children: [
             // Search Bar
@@ -186,68 +284,35 @@ class _MoviesScreenState extends State<MoviesScreen>
               ),
             ),
 
-            // Categories
-            if (categories.isNotEmpty)
-              CategoryList(
-                categories: categories,
-                selectedCategoryId: _selectedCategoryId,
-                onCategorySelected: _onCategorySelected,
-                showAllOption: false,
-              ),
-
-            // Movies with FutureBuilder
+            // Category Carousels
             Expanded(
-              child: FutureBuilder<List<Movie>>(
-                future: _getFilteredMovies(provider.movies),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
+              child:
+                  _moviesByCategory.isEmpty
+                      ? const Center(child: Text('No movies available'))
+                      : ListView.builder(
+                        itemCount: categories.length,
+                        itemBuilder: (context, index) {
+                          final category = categories[index];
+                          final movies =
+                              _moviesByCategory[category.categoryId] ?? [];
 
-                  if (snapshot.hasError) {
-                    return Center(
-                      child: Text(
-                        'Error: ${snapshot.error}',
-                        style: AppTextStyles.body1,
+                          if (movies.isEmpty) {
+                            return const SizedBox.shrink();
+                          }
+
+                          return ContentCarousel(
+                            title: category.categoryName,
+                            items: movies,
+                            onItemTap:
+                                (movie) => _openMovieDetails(
+                                  context,
+                                  movie as Movie,
+                                  provider,
+                                ),
+                            contentType: ContentType.movie,
+                          );
+                        },
                       ),
-                    );
-                  }
-
-                  final movies = snapshot.data ?? [];
-
-                  if (movies.isEmpty) {
-                    return Center(
-                      child: Text(
-                        AppStrings.noResults,
-                        style: AppTextStyles.body1,
-                      ),
-                    );
-                  }
-
-                  // Prefetch movie posters in the background
-                  _prefetchMoviePosters(movies);
-
-                  return GridView.builder(
-                    padding: const EdgeInsets.all(AppPaddings.medium),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          childAspectRatio: 2 / 3,
-                          crossAxisSpacing: AppPaddings.small,
-                          mainAxisSpacing: AppPaddings.small,
-                        ),
-                    itemCount: movies.length,
-                    itemBuilder: (context, index) {
-                      final movie = movies[index];
-                      return MovieCard(
-                        movie: movie,
-                        onTap:
-                            () => _openMovieDetails(context, movie, provider),
-                      );
-                    },
-                  );
-                },
-              ),
             ),
           ],
         );
@@ -264,30 +329,5 @@ class _MoviesScreenState extends State<MoviesScreen>
       context,
       MaterialPageRoute(builder: (context) => MovieDetailsScreen(movie: movie)),
     );
-  }
-
-  // Prefetch movie posters in the background using isolates
-  void _prefetchMoviePosters(List<Movie> movies) {
-    // Extract poster URLs
-    final posterUrls =
-        movies
-            .where((movie) => movie.streamIcon.isNotEmpty)
-            .map((movie) => movie.streamIcon)
-            .toList();
-
-    // Add TMDB poster URLs if available
-    for (final movie in movies) {
-      if (movie.tmdbId != null &&
-          movie.tmdbId!.isNotEmpty &&
-          movie.tmdbId != '0') {
-        // We don't have direct access to the TMDB poster URL here,
-        // but we can prefetch them in the MovieCard widget
-      }
-    }
-
-    // Prefetch in background
-    if (posterUrls.isNotEmpty) {
-      ImageService.prefetchImages(posterUrls);
-    }
   }
 }

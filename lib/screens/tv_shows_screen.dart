@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/series.dart';
 import '../providers/content_provider.dart';
-import '../services/data_processing_service.dart';
-import '../services/image_service.dart';
+import '../services/objectbox_service.dart';
 import '../utils/constants.dart';
-import '../widgets/category_list.dart';
 import '../widgets/error_display.dart';
 import '../widgets/loading_indicator.dart';
-import '../widgets/series_card.dart';
+import '../widgets/content_carousel.dart';
 import 'series_details_screen.dart';
 
 class TVShowsScreen extends StatefulWidget {
@@ -20,10 +18,10 @@ class TVShowsScreen extends StatefulWidget {
 
 class _TVShowsScreenState extends State<TVShowsScreen>
     with AutomaticKeepAliveClientMixin {
-  String? _selectedCategoryId;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
   bool _initialLoadComplete = false;
+  Map<String, List<Series>> _seriesByCategory = {};
 
   @override
   bool get wantKeepAlive => true; // Keep this widget alive when switching tabs
@@ -50,38 +48,13 @@ class _TVShowsScreenState extends State<TVShowsScreen>
       debugPrint(
         'TV SHOWS SCREEN: seriesCategories count = ${provider.seriesCategories.length}',
       );
-      debugPrint(
-        'TV SHOWS SCREEN: seriesList count = ${provider.seriesList.length}',
-      );
 
-      // Only load categories if we don't have preloaded data
-      if (!provider.hasPreloadedData) {
-        debugPrint('TV SHOWS SCREEN: No preloaded data, loading categories');
-        _loadCategories().then((_) {
-          setState(() {
-            _initialLoadComplete = true;
-          });
-        });
-      } else if (provider.seriesCategories.isNotEmpty) {
-        // If we have preloaded data, just set the selected category
-        debugPrint(
-          'TV SHOWS SCREEN: Using preloaded data, setting selected category',
-        );
-        setState(() {
-          _selectedCategoryId = provider.seriesCategories.first.categoryId;
-          _initialLoadComplete = true;
-        });
-        debugPrint(
-          'TV SHOWS SCREEN: Selected category ID: $_selectedCategoryId',
-        );
-      } else {
-        debugPrint(
-          'TV SHOWS SCREEN: No categories available, even with preloaded data',
-        );
+      // Load all series for all categories
+      _loadAllSeries().then((_) {
         setState(() {
           _initialLoadComplete = true;
         });
-      }
+      });
     });
   }
 
@@ -91,53 +64,44 @@ class _TVShowsScreenState extends State<TVShowsScreen>
     super.dispose();
   }
 
-  Future<void> _loadCategories() async {
-    debugPrint('TV SHOWS SCREEN: Loading series categories');
+  Future<void> _loadAllSeries() async {
+    debugPrint('TV SHOWS SCREEN: Loading all series for all categories');
     final provider = Provider.of<ContentProvider>(context, listen: false);
+
+    // If we have preloaded data, use it
+    if (provider.hasPreloadedData) {
+      _organizeSeriesByCategory();
+      return;
+    }
+
+    // Otherwise, load categories and then series
     await provider.loadSeriesCategories();
-    debugPrint(
-      'TV SHOWS SCREEN: Loaded ${provider.seriesCategories.length} series categories',
-    );
 
-    if (provider.seriesCategories.isNotEmpty) {
-      debugPrint('TV SHOWS SCREEN: Categories loaded, now loading series');
-      await _loadSeries();
-    } else {
+    if (provider.seriesCategories.isEmpty) {
       debugPrint('TV SHOWS SCREEN: No series categories available');
-    }
-  }
-
-  Future<void> _loadSeries() async {
-    debugPrint('TV SHOWS SCREEN: Loading series');
-    final provider = Provider.of<ContentProvider>(context, listen: false);
-
-    if (_selectedCategoryId != null) {
-      debugPrint(
-        'TV SHOWS SCREEN: Loading series for selected category: $_selectedCategoryId',
-      );
-      await provider.loadSeriesByCategory(_selectedCategoryId!);
-    } else if (provider.seriesCategories.isNotEmpty) {
-      // Load series from the first category if none is selected
-      final firstCategoryId = provider.seriesCategories.first.categoryId;
-      debugPrint(
-        'TV SHOWS SCREEN: Loading series for first category: $firstCategoryId',
-      );
-      await provider.loadSeriesByCategory(firstCategoryId);
-    } else {
-      debugPrint(
-        'TV SHOWS SCREEN: Cannot load series - no categories available',
-      );
+      return;
     }
 
-    debugPrint('TV SHOWS SCREEN: Loaded ${provider.seriesList.length} series');
+    // Load all series from the database
+    _organizeSeriesByCategory();
   }
 
-  void _onCategorySelected(String categoryId) {
-    debugPrint('TV SHOWS SCREEN: Category selected: $categoryId');
-    setState(() {
-      _selectedCategoryId = categoryId.isEmpty ? null : categoryId;
-    });
-    _loadSeries();
+  void _organizeSeriesByCategory() {
+    // Get all series from the database
+    final allSeries = ObjectBoxService.getSeries().cast<Series>();
+
+    // Group series by category
+    _seriesByCategory = {};
+    for (final series in allSeries) {
+      if (!_seriesByCategory.containsKey(series.categoryId)) {
+        _seriesByCategory[series.categoryId] = [];
+      }
+      _seriesByCategory[series.categoryId]!.add(series);
+    }
+
+    debugPrint(
+      'TV SHOWS SCREEN: Organized series into ${_seriesByCategory.length} categories',
+    );
   }
 
   void _onSearchChanged(String query) {
@@ -146,9 +110,17 @@ class _TVShowsScreenState extends State<TVShowsScreen>
     });
   }
 
-  Future<List<Series>> _getFilteredSeries(List<Series> seriesList) async {
-    // Use isolate for filtering series
-    return await DataProcessingService.filterSeries(seriesList, _searchQuery);
+  List<Series> _getFilteredSeries(List<Series> seriesList) {
+    if (_searchQuery.isEmpty) return seriesList;
+
+    return seriesList
+        .where(
+          (series) =>
+              series.name.toLowerCase().contains(_searchQuery) ||
+              (series.plot.toLowerCase().contains(_searchQuery)) ||
+              (series.cast.toLowerCase().contains(_searchQuery)),
+        )
+        .toList();
   }
 
   @override
@@ -165,12 +137,127 @@ class _TVShowsScreenState extends State<TVShowsScreen>
         if (provider.error != null) {
           return ErrorDisplay(
             errorMessage: provider.error!,
-            onRetry: _loadCategories,
+            onRetry: _loadAllSeries,
           );
         }
 
         final categories = provider.seriesCategories;
 
+        if (!_initialLoadComplete) {
+          return const LoadingIndicator(message: "Loading TV shows...");
+        }
+
+        // If search query is not empty, show filtered results
+        if (_searchQuery.isNotEmpty) {
+          // Flatten all series from all categories
+          final allSeries =
+              _seriesByCategory.values.expand((series) => series).toList();
+          final filteredSeries = _getFilteredSeries(allSeries);
+
+          return Column(
+            children: [
+              // Search Bar
+              Padding(
+                padding: const EdgeInsets.all(AppPaddings.medium),
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: AppStrings.search,
+                    prefixIcon: const Icon(AppIcons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        AppBorderRadius.medium,
+                      ),
+                    ),
+                    filled: true,
+                    fillColor: AppColors.card,
+                  ),
+                  style: AppTextStyles.body1,
+                  onChanged: _onSearchChanged,
+                ),
+              ),
+
+              // Search results
+              Expanded(
+                child:
+                    filteredSeries.isEmpty
+                        ? Center(
+                          child: Text(
+                            AppStrings.noResults,
+                            style: AppTextStyles.body1,
+                          ),
+                        )
+                        : GridView.builder(
+                          padding: const EdgeInsets.all(AppPaddings.medium),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 3,
+                                childAspectRatio: 2 / 3,
+                                crossAxisSpacing: AppPaddings.small,
+                                mainAxisSpacing: AppPaddings.small,
+                              ),
+                          itemCount: filteredSeries.length,
+                          itemBuilder: (context, index) {
+                            final series = filteredSeries[index];
+                            return GestureDetector(
+                              onTap: () => _openSeriesDetails(context, series),
+                              child: Card(
+                                clipBehavior: Clip.antiAlias,
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    Expanded(
+                                      child:
+                                          series.cover.isNotEmpty
+                                              ? Image.network(
+                                                series.cover,
+                                                fit: BoxFit.cover,
+                                                errorBuilder:
+                                                    (
+                                                      context,
+                                                      error,
+                                                      stackTrace,
+                                                    ) => const Center(
+                                                      child: Icon(
+                                                        AppIcons.tvShows,
+                                                        size: 40,
+                                                        color:
+                                                            AppColors.primary,
+                                                      ),
+                                                    ),
+                                              )
+                                              : const Center(
+                                                child: Icon(
+                                                  AppIcons.tvShows,
+                                                  size: 40,
+                                                  color: AppColors.primary,
+                                                ),
+                                              ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.all(
+                                        AppPaddings.small,
+                                      ),
+                                      child: Text(
+                                        series.name,
+                                        style: AppTextStyles.body2,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+              ),
+            ],
+          );
+        }
+
+        // Show category carousels
         return Column(
           children: [
             // Search Bar
@@ -192,67 +279,34 @@ class _TVShowsScreenState extends State<TVShowsScreen>
               ),
             ),
 
-            // Categories
-            if (categories.isNotEmpty)
-              CategoryList(
-                categories: categories,
-                selectedCategoryId: _selectedCategoryId,
-                onCategorySelected: _onCategorySelected,
-                showAllOption: false,
-              ),
-
-            // Series with FutureBuilder
+            // Category Carousels
             Expanded(
-              child: FutureBuilder<List<Series>>(
-                future: _getFilteredSeries(provider.seriesList),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
+              child:
+                  _seriesByCategory.isEmpty
+                      ? const Center(child: Text('No TV shows available'))
+                      : ListView.builder(
+                        itemCount: categories.length,
+                        itemBuilder: (context, index) {
+                          final category = categories[index];
+                          final seriesList =
+                              _seriesByCategory[category.categoryId] ?? [];
 
-                  if (snapshot.hasError) {
-                    return Center(
-                      child: Text(
-                        'Error: ${snapshot.error}',
-                        style: AppTextStyles.body1,
+                          if (seriesList.isEmpty) {
+                            return const SizedBox.shrink();
+                          }
+
+                          return ContentCarousel(
+                            title: category.categoryName,
+                            items: seriesList,
+                            onItemTap:
+                                (series) => _openSeriesDetails(
+                                  context,
+                                  series as Series,
+                                ),
+                            contentType: ContentType.series,
+                          );
+                        },
                       ),
-                    );
-                  }
-
-                  final seriesList = snapshot.data ?? [];
-
-                  if (seriesList.isEmpty) {
-                    return Center(
-                      child: Text(
-                        AppStrings.noResults,
-                        style: AppTextStyles.body1,
-                      ),
-                    );
-                  }
-
-                  // Prefetch series posters in the background
-                  _prefetchSeriesPosters(seriesList);
-
-                  return GridView.builder(
-                    padding: const EdgeInsets.all(AppPaddings.medium),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          childAspectRatio: 2 / 3,
-                          crossAxisSpacing: AppPaddings.small,
-                          mainAxisSpacing: AppPaddings.small,
-                        ),
-                    itemCount: seriesList.length,
-                    itemBuilder: (context, index) {
-                      final series = seriesList[index];
-                      return SeriesCard(
-                        series: series,
-                        onTap: () => _openSeriesDetails(context, series),
-                      );
-                    },
-                  );
-                },
-              ),
             ),
           ],
         );
@@ -267,20 +321,5 @@ class _TVShowsScreenState extends State<TVShowsScreen>
         builder: (context) => SeriesDetailsScreen(series: series),
       ),
     );
-  }
-
-  // Prefetch series posters in the background using isolates
-  void _prefetchSeriesPosters(List<Series> seriesList) {
-    // Extract poster URLs
-    final posterUrls =
-        seriesList
-            .where((series) => series.cover.isNotEmpty)
-            .map((series) => series.cover)
-            .toList();
-
-    // Prefetch in background
-    if (posterUrls.isNotEmpty) {
-      ImageService.prefetchImages(posterUrls);
-    }
   }
 }

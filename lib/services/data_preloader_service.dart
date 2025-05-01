@@ -21,20 +21,10 @@ class DataPreloaderService {
       final vodCategories = await _xtreamService.getVodCategories();
       debugPrint('PRELOADING: Received ${vodCategories.length} VOD categories');
 
-      // Preload movies for the first category if available
-      List<Movie> movies = [];
-      if (vodCategories.isNotEmpty) {
-        final firstCategoryId = vodCategories.first.categoryId;
-        debugPrint(
-          'PRELOADING: Fetching movies for category ID: $firstCategoryId',
-        );
-        movies = await _xtreamService.getVodStreamsByCategory(firstCategoryId);
-        debugPrint(
-          'PRELOADING: Received ${movies.length} movies for first category',
-        );
-      } else {
-        debugPrint('PRELOADING: No VOD categories available to fetch movies');
-      }
+      // Preload all movies across all categories
+      debugPrint('PRELOADING: Fetching all movies across all categories...');
+      List<Movie> movies = await _xtreamService.getAllVodStreams();
+      debugPrint('PRELOADING: Received ${movies.length} movies in total');
 
       // Preload Series data
       debugPrint('PRELOADING: Fetching series categories...');
@@ -43,22 +33,10 @@ class DataPreloaderService {
         'PRELOADING: Received ${seriesCategories.length} series categories',
       );
 
-      // Preload series for the first category if available
-      List<Series> seriesList = [];
-      if (seriesCategories.isNotEmpty) {
-        final firstCategoryId = seriesCategories.first.categoryId;
-        debugPrint(
-          'PRELOADING: Fetching series for category ID: $firstCategoryId',
-        );
-        seriesList = await _xtreamService.getSeriesByCategory(firstCategoryId);
-        debugPrint(
-          'PRELOADING: Received ${seriesList.length} series for first category',
-        );
-      } else {
-        debugPrint(
-          'PRELOADING: No series categories available to fetch series',
-        );
-      }
+      // Preload all series across all categories
+      debugPrint('PRELOADING: Fetching all series across all categories...');
+      List<Series> seriesList = await _xtreamService.getAllSeries();
+      debugPrint('PRELOADING: Received ${seriesList.length} series in total');
 
       // Preload Live TV categories
       debugPrint('PRELOADING: Fetching Live TV categories...');
@@ -67,24 +45,14 @@ class DataPreloaderService {
         'PRELOADING: Received ${liveCategories.length} Live TV categories',
       );
 
-      // Preload live channels for the first category if available
-      List<Channel> liveChannels = [];
-      if (liveCategories.isNotEmpty) {
-        final firstCategoryId = liveCategories.first.categoryId;
-        debugPrint(
-          'PRELOADING: Fetching live channels for category ID: $firstCategoryId',
-        );
-        liveChannels = await _xtreamService.getLiveStreamsByCategory(
-          firstCategoryId,
-        );
-        debugPrint(
-          'PRELOADING: Received ${liveChannels.length} live channels for first category',
-        );
-      } else {
-        debugPrint(
-          'PRELOADING: No live categories available to fetch channels',
-        );
-      }
+      // Preload all live channels across all categories
+      debugPrint(
+        'PRELOADING: Fetching all live channels across all categories...',
+      );
+      List<Channel> liveChannels = await _xtreamService.getAllLiveStreams();
+      debugPrint(
+        'PRELOADING: Received ${liveChannels.length} live channels in total',
+      );
 
       debugPrint(
         '===== PRELOADING: Data preloading completed successfully =====',

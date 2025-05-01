@@ -413,4 +413,100 @@ class XtreamService {
     final url = _getNormalizedUrl();
     return '$url/series/$username/$password/$streamId.mp4';
   }
+
+  // Get all VOD streams
+  Future<List<Movie>> getAllVodStreams() async {
+    try {
+      // First get all categories to map category IDs to names
+      final categories = await getVodCategories();
+      final Map<String, String> categoryMap = {
+        for (var category in categories)
+          category.categoryId: category.categoryName,
+      };
+
+      final response = await http.get(
+        Uri.parse('$_baseUrl&action=get_vod_streams'),
+      );
+
+      if (response.statusCode == 200) {
+        // Use isolate to parse JSON and create model objects with category names
+        return await ComputeService.compute<Map<String, dynamic>, List<Movie>>(
+          _parseAllMoviesWithCategories,
+          {'responseBody': response.body, 'categoryMap': categoryMap},
+        );
+      } else {
+        throw Exception(
+          'Failed to load all VOD streams: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      throw Exception('Error fetching all VOD streams: $e');
+    }
+  }
+
+  // Static method for parsing all movies with category names in isolate
+  static List<Movie> _parseAllMoviesWithCategories(
+    Map<String, dynamic> params,
+  ) {
+    final String responseBody = params['responseBody'];
+    final Map<String, String> categoryMap = params['categoryMap'];
+
+    final List<dynamic> data = json.decode(responseBody);
+    return data.map((item) {
+      // Add category name to the JSON before creating the Movie object
+      final Map<String, dynamic> itemWithCategory = Map<String, dynamic>.from(
+        item,
+      );
+      final String categoryId = item['category_id']?.toString() ?? '';
+      itemWithCategory['category_name'] =
+          categoryMap[categoryId] ?? 'Unknown Category';
+      return Movie.fromJson(itemWithCategory);
+    }).toList();
+  }
+
+  // Get all series
+  Future<List<Series>> getAllSeries() async {
+    try {
+      // First get all categories to map category IDs to names
+      final categories = await getSeriesCategories();
+      final Map<String, String> categoryMap = {
+        for (var category in categories)
+          category.categoryId: category.categoryName,
+      };
+
+      final response = await http.get(Uri.parse('$_baseUrl&action=get_series'));
+
+      if (response.statusCode == 200) {
+        // Use isolate to parse JSON and create model objects with category names
+        return await ComputeService.compute<Map<String, dynamic>, List<Series>>(
+          _parseAllSeriesWithCategories,
+          {'responseBody': response.body, 'categoryMap': categoryMap},
+        );
+      } else {
+        throw Exception('Failed to load all series: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching all series: $e');
+    }
+  }
+
+  // Static method for parsing all series with category names in isolate
+  static List<Series> _parseAllSeriesWithCategories(
+    Map<String, dynamic> params,
+  ) {
+    final String responseBody = params['responseBody'];
+    final Map<String, String> categoryMap = params['categoryMap'];
+
+    final List<dynamic> data = json.decode(responseBody);
+    return data.map((item) {
+      // Add category name to the JSON before creating the Series object
+      final Map<String, dynamic> itemWithCategory = Map<String, dynamic>.from(
+        item,
+      );
+      final String categoryId = item['category_id']?.toString() ?? '';
+      itemWithCategory['category_name'] =
+          categoryMap[categoryId] ?? 'Unknown Category';
+      return Series.fromJson(itemWithCategory);
+    }).toList();
+  }
 }

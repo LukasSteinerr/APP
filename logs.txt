@@ -1,118 +1,128 @@
-/ProfileInstaller(25223): Installing profile for com.example.xtream_iptv_pro
-I/flutter (25223): TIMING: _openConnection started for connection: test
-I/flutter (25223): TIMING: setConnection started
-I/flutter (25223): TIMING: Services initialized in 0ms
-I/flutter (25223): CONTENT PROVIDER: Checking for cached data for connection e9f3f949-d81a-497f-8358-90ad35cebe9c
-I/flutter (25223): CONTENT PROVIDER: Database hasPreloadedData flag = true
-I/flutter (25223): CONTENT PROVIDER: Database cachedConnectionId = null
-I/flutter (25223): CONTENT PROVIDER: Current connectionId = e9f3f949-d81a-497f-8358-90ad35cebe9c
-I/flutter (25223): CONTENT PROVIDER: Found cached data, loading it (elapsed: 0ms)
-I/flutter (25223): CONTENT PROVIDER: Loaded cached data (elapsed: 103ms):
-I/flutter (25223): CONTENT PROVIDER: VOD Categories: 207
-I/flutter (25223): CONTENT PROVIDER: Series Categories: 207
-I/flutter (25223): CONTENT PROVIDER: Live Categories: 207
-I/flutter (25223): CONTENT PROVIDER: Movies: 4820
-I/flutter (25223): CONTENT PROVIDER: Series: 3699
-I/flutter (25223): CONTENT PROVIDER: Channels: 404
-I/flutter (25223): OBJECTBOX SERVICE: Connection ID saved: e9f3f949-d81a-497f-8358-90ad35cebe9c
-I/flutter (25223): CONTENT PROVIDER: Updated connection ID in database to e9f3f949-d81a-497f-8358-90ad35cebe9c
-I/flutter (25223): CONTENT PROVIDER: _checkForCachedData completed in 104ms
-I/flutter (25223): TIMING: setConnection completed in 106ms
-I/flutter (25223): TIMING: ContentProvider.setConnection completed in 108ms
-I/flutter (25223): TIMING: _openConnection navigation initiated in 121ms
-I/flutter (25223): TIMING: MainScreen.initState started
-I/flutter (25223): MAIN SCREEN: Initializing screens
-I/flutter (25223): MAIN SCREEN: Initialization complete
-I/flutter (25223): TIMING: MainScreen.initState completed in 0ms
-I/flutter (25223): TIMING: MainScreen.build started
-I/flutter (25223): MAIN SCREEN: Building MainScreen
-I/flutter (25223): MAIN SCREEN: hasPreloadedData = true
-I/flutter (25223): MAIN SCREEN: Building with connection: test
-I/flutter (25223): TIMING: MainScreen.build content provider access completed in 0ms
-I/flutter (25223): TIMING: MainScreen.build completed in 2ms
-I/flutter (25223): LIVE TV SCREEN: Initializing
-I/flutter (25223): MOVIES SCREEN: Initializing
-I/flutter (25223): TV SHOWS SCREEN: Initializing
-I/flutter (25223): LIVE TV SCREEN: Post-frame callback executing
-I/flutter (25223): LIVE TV SCREEN: hasPreloadedData = true
-I/flutter (25223): LIVE TV SCREEN: liveCategories count = 207
-I/flutter (25223): LIVE TV SCREEN: liveChannels count = 404
-I/flutter (25223): LIVE TV SCREEN: Using preloaded data, loading channels
-I/flutter (25223): LIVE TV SCREEN: Loading channels
-I/flutter (25223): LIVE TV SCREEN: Loading all live channels
-I/flutter (25223): CONTENT PROVIDER: Using preloaded live channels, skipping API call
-I/flutter (25223): MOVIES SCREEN: Post-frame callback executing
-I/flutter (25223): MOVIES SCREEN: hasPreloadedData = true
-I/flutter (25223): MOVIES SCREEN: vodCategories count = 207
-I/flutter (25223): MOVIES SCREEN: movies count = 4820
-I/flutter (25223): MOVIES SCREEN: Using preloaded data, setting selected category
-I/flutter (25223): MOVIES SCREEN: Selected category ID: 4
-I/flutter (25223): TV SHOWS SCREEN: Post-frame callback executing
-I/flutter (25223): TV SHOWS SCREEN: hasPreloadedData = true
-I/flutter (25223): TV SHOWS SCREEN: seriesCategories count = 207
-I/flutter (25223): TV SHOWS SCREEN: seriesList count = 3699
-I/flutter (25223): TV SHOWS SCREEN: Using preloaded data, setting selected category
-I/flutter (25223): TV SHOWS SCREEN: Selected category ID: 4
-I/flutter (25223): LIVE TV SCREEN: Loaded 404 channels
-W/WindowOnBackDispatcher(25223): OnBackInvokedCallback is not enabled for the application.
-W/WindowOnBackDispatcher(25223): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
-I/flutter (25223): Getting TV show details by TMDB ID: 114925
-I/flutter (25223): Getting TV show details by TMDB ID: 157744
-I/flutter (25223): Getting TV show details by TMDB ID: 209167
-I/flutter (25223): Getting TV show details by TMDB ID: 208944
-I/flutter (25223): Getting TV show details by TMDB ID: 135868
-I/flutter (25223): Getting TV show details by TMDB ID: 205272
-I/flutter (25223): Getting TV show details by TMDB ID: 202884
-I/flutter (25223): Getting movie details by TMDB ID: 1457124
-I/flutter (25223): Getting TV show details by TMDB ID: 206903
-I/flutter (25223): Getting TV show details by TMDB ID: 157202
-I/flutter (25223): Getting TV show details by TMDB ID: 207941
-I/flutter (25223): Getting TV show details by TMDB ID: 199935
-I/flutter (25223): Getting TV show details by TMDB ID: 113988
-I/flutter (25223): Getting movie details by TMDB ID: 549509
-I/flutter (25223): Getting TV show details by TMDB ID: 125392
-I/flutter (25223): Getting TV show details by TMDB ID: 83867
-I/flutter (25223): Getting movie details by TMDB ID: 794347
-I/flutter (25223): Getting movie details by TMDB ID: 1078600
-I/flutter (25223): Getting TV show details by TMDB ID: 153269
-I/flutter (25223): Getting movie details by TMDB ID: 1123187
-I/flutter (25223): Getting movie details by TMDB ID: 799766
-I/flutter (25223): Getting movie details by TMDB ID: 940139
-I/flutter (25223): Getting movie details by TMDB ID: 950396
-I/flutter (25223): Getting movie details by TMDB ID: 1097549
-I/flutter (25223): Getting movie details by TMDB ID: 1035048
-I/flutter (25223): Getting movie details by TMDB ID: 1242669
-I/flutter (25223): Getting movie details by TMDB ID: 1303875
-I/flutter (25223): Getting movie details by TMDB ID: 1235499
-I/flutter (25223): Getting movie details by TMDB ID: 1287804
-I/flutter (25223): Getting movie details by TMDB ID: 1064213
-I/flutter (25223): Successfully retrieved movie details for TMDB ID: 1242669
-I/flutter (25223): Successfully retrieved movie details for TMDB ID: 799766
-I/flutter (25223): Successfully retrieved movie details for TMDB ID: 1123187
-I/flutter (25223): Successfully retrieved movie details for TMDB ID: 1287804
-I/flutter (25223): Successfully retrieved movie details for TMDB ID: 1078600
-I/flutter (25223): Successfully retrieved movie details for TMDB ID: 549509
-I/flutter (25223): Successfully retrieved movie details for TMDB ID: 794347
-I/flutter (25223): Successfully retrieved movie details for TMDB ID: 1457124
-I/flutter (25223): Successfully retrieved movie details for TMDB ID: 1035048
-I/flutter (25223): Successfully retrieved movie details for TMDB ID: 950396
-I/flutter (25223): Successfully retrieved movie details for TMDB ID: 940139
-I/flutter (25223): Successfully retrieved movie details for TMDB ID: 1235499
-I/flutter (25223): Successfully retrieved movie details for TMDB ID: 1064213
-I/flutter (25223): Successfully retrieved movie details for TMDB ID: 1097549
-I/flutter (25223): Successfully retrieved movie details for TMDB ID: 1303875
-I/flutter (25223): Successfully retrieved TV show details for TMDB ID: 157744
-I/flutter (25223): Successfully retrieved TV show details for TMDB ID: 135868
-I/flutter (25223): Successfully retrieved TV show details for TMDB ID: 209167
-I/flutter (25223): Successfully retrieved TV show details for TMDB ID: 206903
-I/flutter (25223): Successfully retrieved TV show details for TMDB ID: 199935
-I/flutter (25223): Successfully retrieved TV show details for TMDB ID: 208944
-I/flutter (25223): Successfully retrieved TV show details for TMDB ID: 114925
-I/flutter (25223): Successfully retrieved TV show details for TMDB ID: 153269
-I/flutter (25223): Successfully retrieved TV show details for TMDB ID: 207941
-I/flutter (25223): Successfully retrieved TV show details for TMDB ID: 83867
-I/flutter (25223): Successfully retrieved TV show details for TMDB ID: 125392
-I/flutter (25223): Successfully retrieved TV show details for TMDB ID: 157202
-I/flutter (25223): Successfully retrieved TV show details for TMDB ID: 205272
-I/flutter (25223): Successfully retrieved TV show details for TMDB ID: 202884
-I/flutter (25223): Successfully retrieved TV show details for TMDB ID: 
+flutter ( 5929): OBJECTBOX SERVICE: Saving connection: ffff
+I/flutter ( 5929): OBJECTBOX SERVICE: Connection saved successfully
+I/flutter ( 5929): ===== ADD CONNECTION: Starting _preloadData() =====
+I/flutter ( 5929): ADD CONNECTION: Getting ConnectionsProvider
+I/flutter ( 5929): ADD CONNECTION: Getting ContentProvider
+I/flutter ( 5929): ADD CONNECTION: Showing preloading overlay
+I/flutter ( 5929): ADD CONNECTION: Getting connections list
+I/flutter ( 5929): ADD CONNECTION: Found 1 connections
+I/flutter ( 5929): ADD CONNECTION: Setting connection: ffff
+I/flutter ( 5929): TIMING: setConnection started
+I/flutter ( 5929): TIMING: Services initialized in 0ms
+I/flutter ( 5929): CONTENT PROVIDER: Checking for cached data for connection 110bf812-dae0-40c0-b5b5-36c4a4be1dcb
+I/flutter ( 5929): CONTENT PROVIDER: Database hasPreloadedData flag = false
+I/flutter ( 5929): CONTENT PROVIDER: Database cachedConnectionId = null
+I/flutter ( 5929): CONTENT PROVIDER: Current connectionId = 110bf812-dae0-40c0-b5b5-36c4a4be1dcb
+I/flutter ( 5929): CONTENT PROVIDER: No cached data found for connection 110bf812-dae0-40c0-b5b5-36c4a4be1dcb (elapsed: 0ms)
+I/flutter ( 5929): CONTENT PROVIDER: _checkForCachedData completed in 0ms
+I/flutter ( 5929): TIMING: setConnection completed in 0ms
+I/flutter ( 5929): ADD CONNECTION: Updating preload step to 1
+I/flutter ( 5929): ADD CONNECTION: Starting data preloading
+I/flutter ( 5929): TIMING: preloadAllData started
+I/flutter ( 5929): CONTENT PROVIDER: Starting preloadAllData()
+I/flutter ( 5929): TIMING: _canMakeApiCalls started
+I/flutter ( 5929): NETWORK SERVICE: Internet connection available
+I/flutter ( 5929): TIMING: _canMakeApiCalls completed in 65ms (will make API calls)
+I/flutter ( 5929): CONTENT PROVIDER: Setting preloading state to true
+I/flutter ( 5929): CONTENT PROVIDER: Calling preloaderService.preloadAllData()
+I/flutter ( 5929): ===== PRELOADING: Starting data preloading process =====
+I/flutter ( 5929): PRELOADING: Fetching VOD categories...
+I/flutter ( 5929): PRELOADING: Received 41 VOD categories
+I/flutter ( 5929): PRELOADING: Fetching movies for all VOD categories
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 28
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 615
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 451
+I/flutter ( 5929): PRELOADING: Received 679 movies for category 615
+I/flutter ( 5929): PRELOADING: Received 7409 movies for category 451
+I/flutter ( 5929): PRELOADING: Received 4822 movies for category 28
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 231
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 605
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 562
+I/flutter ( 5929): PRELOADING: Received 20 movies for category 605
+I/flutter ( 5929): PRELOADING: Received 371 movies for category 562
+I/flutter ( 5929): PRELOADING: Received 515 movies for category 231
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 27
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 561
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 29
+I/flutter ( 5929): PRELOADING: Received 240 movies for category 27
+I/flutter ( 5929): PRELOADING: Received 346 movies for category 561
+I/flutter ( 5929): PRELOADING: Received 960 movies for category 29
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 586
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 538
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 478
+I/flutter ( 5929): PRELOADING: Received 7 movies for category 586
+I/flutter ( 5929): PRELOADING: Received 559 movies for category 538
+I/flutter ( 5929): PRELOADING: Received 2925 movies for category 478
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 584
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 529
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 554
+I/flutter ( 5929): PRELOADING: Received 28 movies for category 529
+I/flutter ( 5929): PRELOADING: Received 44 movies for category 554
+I/flutter ( 5929): PRELOADING: Received 74 movies for category 584
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 30
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 244
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 56
+I/flutter ( 5929): PRELOADING: Received 154 movies for category 244
+I/flutter ( 5929): PRELOADING: Received 526 movies for category 56
+I/flutter ( 5929): PRELOADING: Received 705 movies for category 30
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 263
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 604
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 37
+I/flutter ( 5929): PRELOADING: Received 957 movies for category 604
+I/flutter ( 5929): PRELOADING: Received 1940 movies for category 37
+I/flutter ( 5929): PRELOADING: Received 677 movies for category 263
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 535
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 33
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 512
+I/flutter ( 5929): PRELOADING: Received 414 movies for category 512
+I/flutter ( 5929): PRELOADING: Received 117 movies for category 535
+I/flutter ( 5929): PRELOADING: Received 1053 movies for category 33
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 536
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 524
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 220
+I/flutter ( 5929): PRELOADING: Received 25 movies for category 524
+I/flutter ( 5929): PRELOADING: Received 54 movies for category 220
+I/flutter ( 5929): PRELOADING: Received 31 movies for category 536
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 486
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 517
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 515
+I/flutter ( 5929): PRELOADING: Received 41 movies for category 515
+I/flutter ( 5929): PRELOADING: Received 32 movies for category 486
+I/flutter ( 5929): PRELOADING: Received 7 movies for category 517
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 250
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 464
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 496
+I/flutter ( 5929): PRELOADING: Received 17 movies for category 464
+I/flutter ( 5929): PRELOADING: Received 25 movies for category 250
+I/flutter ( 5929): PRELOADING: Received 41 movies for category 496
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 568
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 46
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 197
+I/flutter ( 5929): PRELOADING: Received 32 movies for category 568
+I/flutter ( 5929): PRELOADING: Received 195 movies for category 46
+I/flutter ( 5929): PRELOADING: Received 1041 movies for category 197
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 182
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 106
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 102
+I/flutter ( 5929): PRELOADING: Received 179 movies for category 182
+I/flutter ( 5929): PRELOADING: Received 217 movies for category 106
+I/flutter ( 5929): PRELOADING: Received 21 movies for category 102
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 354
+I/flutter ( 5929): PRELOADING: Fetching movies for category ID: 31
+I/flutter ( 5929): PRELOADING: Received 63 movies for category 354
+I/flutter ( 5929): PRELOADING: Received 1373 movies for category 31
+I/flutter ( 5929): PRELOADING: Received 28936 movies in total from all categories
+I/flutter ( 5929): PRELOADING: Fetching series categories...
+I/flutter ( 5929): PRELOADING: Received 11 series categories
+I/flutter ( 5929): PRELOADING: Fetching series for all categories
+I/flutter ( 5929): PRELOADING: Fetching series for category ID: 470
+I/flutter ( 5929): PRELOADING: Fetching series for category ID: 563
+I/flutter ( 5929): PRELOADING: Fetching series for category ID: 471
+I/flutter ( 5929): PRELOADING: Received 85 series for category 563
+I/flutter ( 5929): PRELOADING: Received 3702 series for category 470
+I/flutter ( 5929): PRELOADING: Received 1044 series for category 471
+I/flutter ( 5929): PRELOADING: Fetching series for category ID: 408
+I/flutter ( 5929): PRELOADING: Fetching series for category ID: 472
+I/flutter ( 5929): PRELOADING: Fetching series for category ID: 159
+I/flutter ( 5929): PRELOADING: Received 1 series for category 159
+I/flutter ( 5929): PRELOADING: Received 90 series for category 472

@@ -484,14 +484,25 @@ class ContentProvider with ChangeNotifier {
   Future<void> loadLiveChannelsByCategory(String categoryId) async {
     if (_xtreamService == null) return;
 
-    // Skip API call if we already have preloaded data for the first category
-    if (_hasPreloadedData &&
-        _liveChannels.isNotEmpty &&
-        _liveCategories.isNotEmpty &&
-        _liveCategories.first.categoryId == categoryId) {
+    // If we have preloaded data, filter channels by category from the existing data
+    if (_hasPreloadedData && _liveChannels.isNotEmpty) {
       debugPrint(
-        'CONTENT PROVIDER: Using preloaded live channels for category $categoryId, skipping API call',
+        'CONTENT PROVIDER: Filtering preloaded live channels for category $categoryId',
       );
+
+      // Get all channels from the database
+      final allChannels = ObjectBoxService.getChannels().cast<Channel>();
+
+      // Filter channels by category
+      _liveChannels =
+          allChannels
+              .where((channel) => channel.categoryId == categoryId)
+              .toList();
+
+      debugPrint(
+        'CONTENT PROVIDER: Found ${_liveChannels.length} channels for category $categoryId',
+      );
+      notifyListeners();
       return;
     }
 
@@ -601,14 +612,23 @@ class ContentProvider with ChangeNotifier {
   Future<void> loadMoviesByCategory(String categoryId) async {
     if (_xtreamService == null) return;
 
-    // Skip API call if we already have preloaded data for the first category
-    if (_hasPreloadedData &&
-        _movies.isNotEmpty &&
-        _vodCategories.isNotEmpty &&
-        _vodCategories.first.categoryId == categoryId) {
+    // If we have preloaded data, filter movies by category from the existing data
+    if (_hasPreloadedData && _movies.isNotEmpty) {
       debugPrint(
-        'CONTENT PROVIDER: Using preloaded movies for category $categoryId, skipping API call',
+        'CONTENT PROVIDER: Filtering preloaded movies for category $categoryId',
       );
+
+      // Get all movies from the database
+      final allMovies = ObjectBoxService.getMovies().cast<Movie>();
+
+      // Filter movies by category
+      _movies =
+          allMovies.where((movie) => movie.categoryId == categoryId).toList();
+
+      debugPrint(
+        'CONTENT PROVIDER: Found ${_movies.length} movies for category $categoryId',
+      );
+      notifyListeners();
       return;
     }
 
@@ -672,14 +692,23 @@ class ContentProvider with ChangeNotifier {
   Future<void> loadSeriesByCategory(String categoryId) async {
     if (_xtreamService == null) return;
 
-    // Skip API call if we already have preloaded data for the first category
-    if (_hasPreloadedData &&
-        _seriesList.isNotEmpty &&
-        _seriesCategories.isNotEmpty &&
-        _seriesCategories.first.categoryId == categoryId) {
+    // If we have preloaded data, filter series by category from the existing data
+    if (_hasPreloadedData && _seriesList.isNotEmpty) {
       debugPrint(
-        'CONTENT PROVIDER: Using preloaded series for category $categoryId, skipping API call',
+        'CONTENT PROVIDER: Filtering preloaded series for category $categoryId',
       );
+
+      // Get all series from the database
+      final allSeries = ObjectBoxService.getSeries().cast<Series>();
+
+      // Filter series by category
+      _seriesList =
+          allSeries.where((series) => series.categoryId == categoryId).toList();
+
+      debugPrint(
+        'CONTENT PROVIDER: Found ${_seriesList.length} series for category $categoryId',
+      );
+      notifyListeners();
       return;
     }
 

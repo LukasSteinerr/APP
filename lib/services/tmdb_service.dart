@@ -26,7 +26,7 @@ class TMDBService {
         url += '&year=$year';
       }
 
-      print(
+      debugPrint(
         'Searching TMDB for movie: $title (cleaned: $cleanTitle), year: $year',
       );
 
@@ -44,7 +44,7 @@ class TMDBService {
             for (var movie in results) {
               final releaseDate = movie['release_date'] as String?;
               if (releaseDate != null && releaseDate.startsWith(year)) {
-                print(
+                debugPrint(
                   'Found exact year match for $title: ${movie['title']} (${movie['release_date']})',
                 );
                 return movie;
@@ -54,20 +54,20 @@ class TMDBService {
 
           // If no exact year match or no year provided, return the first result
           final firstResult = results.first;
-          print(
+          debugPrint(
             'Using first TMDB result for $title: ${firstResult['title']} (${firstResult['release_date']})',
           );
           return firstResult;
         } else {
-          print('No TMDB results found for movie: $title');
+          debugPrint('No TMDB results found for movie: $title');
         }
       } else {
-        print('TMDB API error: ${response.statusCode} - ${response.body}');
+        debugPrint('TMDB API error: ${response.statusCode} - ${response.body}');
       }
 
       return null;
     } catch (e) {
-      print('Error searching for movie: $e');
+      debugPrint('Error searching for movie: $e');
       return null;
     }
   }
@@ -81,7 +81,7 @@ class TMDBService {
       // Build the query URL
       final url = '$baseUrl/search/tv?api_key=$apiKey&query=$cleanTitle';
 
-      print('Searching TMDB for TV show: $title (cleaned: $cleanTitle)');
+      debugPrint('Searching TMDB for TV show: $title (cleaned: $cleanTitle)');
 
       // Make the request
       final response = await http.get(Uri.parse(url));
@@ -93,20 +93,20 @@ class TMDBService {
         if (results.isNotEmpty) {
           // Return the first result
           final firstResult = results.first;
-          print(
+          debugPrint(
             'Using first TMDB result for $title: ${firstResult['name']} (${firstResult['first_air_date']})',
           );
           return firstResult;
         } else {
-          print('No TMDB results found for TV show: $title');
+          debugPrint('No TMDB results found for TV show: $title');
         }
       } else {
-        print('TMDB API error: ${response.statusCode} - ${response.body}');
+        debugPrint('TMDB API error: ${response.statusCode} - ${response.body}');
       }
 
       return null;
     } catch (e) {
-      print('Error searching for TV show: $e');
+      debugPrint('Error searching for TV show: $e');
       return null;
     }
   }

@@ -4,37 +4,8 @@
   "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
   "entities": [
     {
-      "id": "1:2254950287624795660",
-      "lastPropertyId": "4:4235518701115617448",
-      "name": "Category",
-      "properties": [
-        {
-          "id": "1:1688142078322380670",
-          "name": "id",
-          "type": 6,
-          "flags": 1
-        },
-        {
-          "id": "2:5258361315905754779",
-          "name": "categoryId",
-          "type": 9
-        },
-        {
-          "id": "3:6979824841748986643",
-          "name": "categoryName",
-          "type": 9
-        },
-        {
-          "id": "4:4235518701115617448",
-          "name": "parentId",
-          "type": 9
-        }
-      ],
-      "relations": []
-    },
-    {
       "id": "2:4806788391075810133",
-      "lastPropertyId": "7:6741605205491732950",
+      "lastPropertyId": "8:1793018896279461986",
       "name": "Channel",
       "properties": [
         {
@@ -72,13 +43,18 @@
           "id": "7:6741605205491732950",
           "name": "hasTvArchive",
           "type": 1
+        },
+        {
+          "id": "8:1793018896279461986",
+          "name": "categoryName",
+          "type": 9
         }
       ],
       "relations": []
     },
     {
       "id": "3:2614739341018227784",
-      "lastPropertyId": "16:945473941763871377",
+      "lastPropertyId": "17:5232430591768279805",
       "name": "Movie",
       "properties": [
         {
@@ -156,6 +132,11 @@
           "id": "15:7539576128831795833",
           "name": "year",
           "type": 9
+        },
+        {
+          "id": "17:5232430591768279805",
+          "name": "categoryName",
+          "type": 9
         }
       ],
       "relations": []
@@ -176,7 +157,7 @@
     },
     {
       "id": "5:5855371537969812761",
-      "lastPropertyId": "13:8635249152278773996",
+      "lastPropertyId": "14:2317007877254287243",
       "name": "Series",
       "properties": [
         {
@@ -244,6 +225,11 @@
           "id": "13:8635249152278773996",
           "name": "backdropPath",
           "type": 9
+        },
+        {
+          "id": "14:2317007877254287243",
+          "name": "categoryName",
+          "type": 9
         }
       ],
       "relations": []
@@ -299,10 +285,16 @@
   "lastSequenceId": "0:0",
   "modelVersion": 5,
   "modelVersionParserMinimum": 5,
-  "retiredEntityUids": [],
+  "retiredEntityUids": [
+    2254950287624795660
+  ],
   "retiredIndexUids": [],
   "retiredPropertyUids": [
-    945473941763871377
+    945473941763871377,
+    1688142078322380670,
+    5258361315905754779,
+    6979824841748986643,
+    4235518701115617448
   ],
   "retiredRelationUids": [],
   "version": 1

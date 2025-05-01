@@ -16,7 +16,6 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
-  bool _initialized = false;
 
   // We'll create screens on demand to ensure they use preloaded data
   late final List<Widget> _screens;
@@ -44,7 +43,6 @@ class _MainScreenState extends State<MainScreen> {
       const SettingsScreen(key: PageStorageKey('settings')),
     ];
 
-    _initialized = true;
     debugPrint('MAIN SCREEN: Initialization complete');
     debugPrint(
       'TIMING: MainScreen.initState completed in ${stopwatch.elapsedMilliseconds}ms',

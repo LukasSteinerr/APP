@@ -15,6 +15,7 @@ class Series {
   String releaseDate;
   String rating;
   String categoryId;
+  String categoryName;
   String? tmdbId;
   String? backdropPath;
 
@@ -29,6 +30,7 @@ class Series {
     required this.releaseDate,
     required this.rating,
     required this.categoryId,
+    required this.categoryName,
     this.tmdbId,
     this.backdropPath,
   });
@@ -53,6 +55,7 @@ class Series {
       releaseDate: safeToString(json['releaseDate']),
       rating: safeToString(json['rating']),
       categoryId: json['category_id']?.toString() ?? '',
+      categoryName: json['category_name'] ?? '',
       tmdbId: json['tmdb']?.toString() ?? json['tmdb_id']?.toString(),
       backdropPath:
           json['backdrop_path'] is String ? json['backdrop_path'] : null,
@@ -70,6 +73,7 @@ class Series {
     'releaseDate': releaseDate,
     'rating': rating,
     'category_id': categoryId,
+    'category_name': categoryName,
     'tmdb_id': tmdbId,
     'backdrop_path': backdropPath,
   };

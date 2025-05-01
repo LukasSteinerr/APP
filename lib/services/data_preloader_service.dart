@@ -1,5 +1,5 @@
-import 'package:flutter/foundation.dart' hide Category;
-import '../models/category.dart';
+import 'package:flutter/foundation.dart';
+import '../models/category_item.dart';
 import '../models/channel.dart';
 import '../models/movie.dart';
 import '../models/series.dart';
@@ -110,11 +110,11 @@ class DataPreloaderService {
 
 /// Class to hold preloaded data
 class PreloadedData {
-  final List<Category> vodCategories;
+  final List<CategoryItem> vodCategories;
   final List<Movie> initialMovies;
-  final List<Category> seriesCategories;
+  final List<CategoryItem> seriesCategories;
   final List<Series> initialSeries;
-  final List<Category> liveCategories;
+  final List<CategoryItem> liveCategories;
   final List<Channel> initialChannels;
 
   PreloadedData({

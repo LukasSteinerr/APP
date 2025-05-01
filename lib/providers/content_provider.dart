@@ -1,10 +1,10 @@
-import 'package:flutter/foundation.dart' hide Category;
+import 'package:flutter/foundation.dart';
 import '../models/channel.dart';
 import '../models/movie.dart';
 import '../models/series.dart';
 import '../models/xtream_connection.dart';
 import '../services/xtream_service.dart';
-import '../models/category.dart';
+import '../models/category_item.dart';
 import '../services/data_preloader_service.dart';
 import '../services/objectbox_service.dart';
 import '../services/network_service.dart';
@@ -15,15 +15,15 @@ class ContentProvider with ChangeNotifier {
   DataPreloaderService? _preloaderService;
 
   // Live TV
-  List<Category> _liveCategories = [];
+  List<CategoryItem> _liveCategories = [];
   List<Channel> _liveChannels = [];
 
   // VOD
-  List<Category> _vodCategories = [];
+  List<CategoryItem> _vodCategories = [];
   List<Movie> _movies = [];
 
   // Series
-  List<Category> _seriesCategories = [];
+  List<CategoryItem> _seriesCategories = [];
   List<Series> _seriesList = [];
 
   // Loading and error states
@@ -36,11 +36,11 @@ class ContentProvider with ChangeNotifier {
 
   // Getters
   XtreamConnection? get currentConnection => _currentConnection;
-  List<Category> get liveCategories => _liveCategories;
+  List<CategoryItem> get liveCategories => _liveCategories;
   List<Channel> get liveChannels => _liveChannels;
-  List<Category> get vodCategories => _vodCategories;
+  List<CategoryItem> get vodCategories => _vodCategories;
   List<Movie> get movies => _movies;
-  List<Category> get seriesCategories => _seriesCategories;
+  List<CategoryItem> get seriesCategories => _seriesCategories;
   List<Series> get seriesList => _seriesList;
   bool get isLoading => _isLoading;
   bool get isPreloading => _isPreloading;
@@ -101,13 +101,69 @@ class ContentProvider with ChangeNotifier {
       );
 
       // Load data from ObjectBox
-      _vodCategories = ObjectBoxService.getVodCategories().cast<Category>();
-      _seriesCategories =
-          ObjectBoxService.getSeriesCategories().cast<Category>();
-      _liveCategories = ObjectBoxService.getLiveCategories().cast<Category>();
+      // Since we no longer have Category entities, we'll create empty category lists
+      // and populate them from the content data
       _movies = ObjectBoxService.getMovies().cast<Movie>();
       _seriesList = ObjectBoxService.getSeries().cast<Series>();
       _liveChannels = ObjectBoxService.getChannels().cast<Channel>();
+
+      // Extract category information from the content data
+      if (_movies.isNotEmpty) {
+        // Create a set to avoid duplicate categories
+        final Set<String> categoryIds = {};
+        _vodCategories =
+            _movies
+                .where(
+                  (movie) => categoryIds.add(movie.categoryId),
+                ) // Only add unique categories
+                .map(
+                  (movie) => CategoryItem(
+                    categoryId: movie.categoryId,
+                    categoryName: movie.categoryName,
+                  ),
+                )
+                .toList();
+      } else {
+        _vodCategories = [];
+      }
+
+      if (_seriesList.isNotEmpty) {
+        // Create a set to avoid duplicate categories
+        final Set<String> categoryIds = {};
+        _seriesCategories =
+            _seriesList
+                .where(
+                  (series) => categoryIds.add(series.categoryId),
+                ) // Only add unique categories
+                .map(
+                  (series) => CategoryItem(
+                    categoryId: series.categoryId,
+                    categoryName: series.categoryName,
+                  ),
+                )
+                .toList();
+      } else {
+        _seriesCategories = [];
+      }
+
+      if (_liveChannels.isNotEmpty) {
+        // Create a set to avoid duplicate categories
+        final Set<String> categoryIds = {};
+        _liveCategories =
+            _liveChannels
+                .where(
+                  (channel) => categoryIds.add(channel.categoryId),
+                ) // Only add unique categories
+                .map(
+                  (channel) => CategoryItem(
+                    categoryId: channel.categoryId,
+                    categoryName: channel.categoryName,
+                  ),
+                )
+                .toList();
+      } else {
+        _liveCategories = [];
+      }
 
       _hasPreloadedData = true;
 
@@ -266,12 +322,28 @@ class ContentProvider with ChangeNotifier {
       debugPrint(
         'CONTENT PROVIDER: Setting live categories (${preloadedData.liveCategories.length})',
       );
-      _liveCategories = preloadedData.liveCategories.cast<Category>();
+      _liveCategories =
+          preloadedData.liveCategories
+              .map(
+                (c) => CategoryItem(
+                  categoryId: c.categoryId,
+                  categoryName: c.categoryName,
+                ),
+              )
+              .toList();
 
       debugPrint(
         'CONTENT PROVIDER: Setting VOD categories (${preloadedData.vodCategories.length})',
       );
-      _vodCategories = preloadedData.vodCategories.cast<Category>();
+      _vodCategories =
+          preloadedData.vodCategories
+              .map(
+                (c) => CategoryItem(
+                  categoryId: c.categoryId,
+                  categoryName: c.categoryName,
+                ),
+              )
+              .toList();
 
       debugPrint(
         'CONTENT PROVIDER: Setting movies (${preloadedData.initialMovies.length})',
@@ -281,7 +353,15 @@ class ContentProvider with ChangeNotifier {
       debugPrint(
         'CONTENT PROVIDER: Setting series categories (${preloadedData.seriesCategories.length})',
       );
-      _seriesCategories = preloadedData.seriesCategories.cast<Category>();
+      _seriesCategories =
+          preloadedData.seriesCategories
+              .map(
+                (c) => CategoryItem(
+                  categoryId: c.categoryId,
+                  categoryName: c.categoryName,
+                ),
+              )
+              .toList();
 
       debugPrint(
         'CONTENT PROVIDER: Setting series list (${preloadedData.initialSeries.length})',
@@ -300,18 +380,7 @@ class ContentProvider with ChangeNotifier {
       // Save data to ObjectBox
       debugPrint('CONTENT PROVIDER: Saving preloaded data to ObjectBox');
       if (_currentConnection != null) {
-        await ObjectBoxService.saveVodCategories(
-          _vodCategories,
-          _currentConnection!.id,
-        );
-        await ObjectBoxService.saveSeriesCategories(
-          _seriesCategories,
-          _currentConnection!.id,
-        );
-        await ObjectBoxService.saveLiveCategories(
-          _liveCategories,
-          _currentConnection!.id,
-        );
+        // We no longer need to save categories separately as they're included in the content objects
         await ObjectBoxService.saveMovies(_movies, _currentConnection!.id);
         await ObjectBoxService.saveSeries(_seriesList, _currentConnection!.id);
         await ObjectBoxService.saveChannels(
@@ -391,7 +460,17 @@ class ContentProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      _liveCategories = await _xtreamService!.getLiveCategories();
+      // Convert Category objects to CategoryItem objects
+      final categories = await _xtreamService!.getLiveCategories();
+      _liveCategories =
+          categories
+              .map(
+                (c) => CategoryItem(
+                  categoryId: c.categoryId,
+                  categoryName: c.categoryName,
+                ),
+              )
+              .toList();
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -498,7 +577,17 @@ class ContentProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      _vodCategories = await _xtreamService!.getVodCategories();
+      // Convert Category objects to CategoryItem objects
+      final categories = await _xtreamService!.getVodCategories();
+      _vodCategories =
+          categories
+              .map(
+                (c) => CategoryItem(
+                  categoryId: c.categoryId,
+                  categoryName: c.categoryName,
+                ),
+              )
+              .toList();
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -559,7 +648,17 @@ class ContentProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      _seriesCategories = await _xtreamService!.getSeriesCategories();
+      // Convert Category objects to CategoryItem objects
+      final categories = await _xtreamService!.getSeriesCategories();
+      _seriesCategories =
+          categories
+              .map(
+                (c) => CategoryItem(
+                  categoryId: c.categoryId,
+                  categoryName: c.categoryName,
+                ),
+              )
+              .toList();
       _isLoading = false;
       notifyListeners();
     } catch (e) {

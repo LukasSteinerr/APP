@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import '../models/category.dart';
+import '../models/category_item.dart';
 import '../utils/constants.dart';
 
 class CategoryList extends StatelessWidget {
-  final List<Category> categories;
+  final List<CategoryItem> categories;
   final String? selectedCategoryId;
   final Function(String) onCategorySelected;
   final bool showAllOption;
-  
+
   const CategoryList({
     super.key,
     required this.categories,
@@ -36,18 +36,18 @@ class CategoryList extends StatelessWidget {
                 backgroundColor: AppColors.card,
                 selectedColor: AppColors.primary,
                 labelStyle: TextStyle(
-                  color: selectedCategoryId == null
-                      ? AppColors.text
-                      : AppColors.textSecondary,
+                  color:
+                      selectedCategoryId == null
+                          ? AppColors.text
+                          : AppColors.textSecondary,
                 ),
               ),
             );
           }
-          
-          final category = showAllOption
-              ? categories[index - 1]
-              : categories[index];
-          
+
+          final category =
+              showAllOption ? categories[index - 1] : categories[index];
+
           return Padding(
             padding: const EdgeInsets.only(right: AppPaddings.small),
             child: ChoiceChip(
@@ -57,9 +57,10 @@ class CategoryList extends StatelessWidget {
               backgroundColor: AppColors.card,
               selectedColor: AppColors.primary,
               labelStyle: TextStyle(
-                color: selectedCategoryId == category.categoryId
-                    ? AppColors.text
-                    : AppColors.textSecondary,
+                color:
+                    selectedCategoryId == category.categoryId
+                        ? AppColors.text
+                        : AppColors.textSecondary,
               ),
             ),
           );

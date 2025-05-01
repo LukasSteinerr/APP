@@ -19,7 +19,6 @@ class MovieDetailsScreen extends StatefulWidget {
 
 class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
   bool _isLoading = true;
-  String? _errorMessage;
   Map<String, dynamic>? _tmdbDetails;
   String? _posterUrl;
   String? _backdropUrl;
@@ -75,7 +74,7 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'Failed to load movie details: $e';
+        debugPrint('Failed to load movie details: $e');
         _isLoading = false;
       });
     }

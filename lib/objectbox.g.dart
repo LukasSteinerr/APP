@@ -15,7 +15,6 @@ import 'package:objectbox/internal.dart'
 import 'package:objectbox/objectbox.dart' as obx;
 import 'package:objectbox_flutter_libs/objectbox_flutter_libs.dart';
 
-import 'models/category.dart';
 import 'models/channel.dart';
 import 'models/movie.dart';
 import 'models/series.dart';
@@ -26,38 +25,9 @@ export 'package:objectbox/objectbox.dart'; // so that callers only have to impor
 
 final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
-      id: const obx_int.IdUid(1, 2254950287624795660),
-      name: 'Category',
-      lastPropertyId: const obx_int.IdUid(4, 4235518701115617448),
-      flags: 0,
-      properties: <obx_int.ModelProperty>[
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(1, 1688142078322380670),
-            name: 'id',
-            type: 6,
-            flags: 1),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(2, 5258361315905754779),
-            name: 'categoryId',
-            type: 9,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(3, 6979824841748986643),
-            name: 'categoryName',
-            type: 9,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(4, 4235518701115617448),
-            name: 'parentId',
-            type: 9,
-            flags: 0)
-      ],
-      relations: <obx_int.ModelRelation>[],
-      backlinks: <obx_int.ModelBacklink>[]),
-  obx_int.ModelEntity(
       id: const obx_int.IdUid(2, 4806788391075810133),
       name: 'Channel',
-      lastPropertyId: const obx_int.IdUid(7, 6741605205491732950),
+      lastPropertyId: const obx_int.IdUid(8, 1793018896279461986),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
@@ -94,6 +64,11 @@ final _entities = <obx_int.ModelEntity>[
             id: const obx_int.IdUid(7, 6741605205491732950),
             name: 'hasTvArchive',
             type: 1,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(8, 1793018896279461986),
+            name: 'categoryName',
+            type: 9,
             flags: 0)
       ],
       relations: <obx_int.ModelRelation>[],
@@ -101,7 +76,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
       id: const obx_int.IdUid(3, 2614739341018227784),
       name: 'Movie',
-      lastPropertyId: const obx_int.IdUid(16, 945473941763871377),
+      lastPropertyId: const obx_int.IdUid(17, 5232430591768279805),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
@@ -178,6 +153,11 @@ final _entities = <obx_int.ModelEntity>[
             id: const obx_int.IdUid(15, 7539576128831795833),
             name: 'year',
             type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(17, 5232430591768279805),
+            name: 'categoryName',
+            type: 9,
             flags: 0)
       ],
       relations: <obx_int.ModelRelation>[],
@@ -199,7 +179,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
       id: const obx_int.IdUid(5, 5855371537969812761),
       name: 'Series',
-      lastPropertyId: const obx_int.IdUid(13, 8635249152278773996),
+      lastPropertyId: const obx_int.IdUid(14, 2317007877254287243),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
@@ -265,6 +245,11 @@ final _entities = <obx_int.ModelEntity>[
         obx_int.ModelProperty(
             id: const obx_int.IdUid(13, 8635249152278773996),
             name: 'backdropPath',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(14, 2317007877254287243),
+            name: 'categoryName',
             type: 9,
             flags: 0)
       ],
@@ -355,55 +340,23 @@ obx_int.ModelDefinition getObjectBoxModel() {
       lastIndexId: const obx_int.IdUid(0, 0),
       lastRelationId: const obx_int.IdUid(0, 0),
       lastSequenceId: const obx_int.IdUid(0, 0),
-      retiredEntityUids: const [],
+      retiredEntityUids: const [2254950287624795660],
       retiredIndexUids: const [],
-      retiredPropertyUids: const [945473941763871377],
+      retiredPropertyUids: const [
+        945473941763871377,
+        1688142078322380670,
+        5258361315905754779,
+        6979824841748986643,
+        4235518701115617448
+      ],
       retiredRelationUids: const [],
       modelVersion: 5,
       modelVersionParserMinimum: 5,
       version: 1);
 
   final bindings = <Type, obx_int.EntityDefinition>{
-    Category: obx_int.EntityDefinition<Category>(
-        model: _entities[0],
-        toOneRelations: (Category object) => [],
-        toManyRelations: (Category object) => {},
-        getId: (Category object) => object.id,
-        setId: (Category object, int id) {
-          object.id = id;
-        },
-        objectToFB: (Category object, fb.Builder fbb) {
-          final categoryIdOffset = fbb.writeString(object.categoryId);
-          final categoryNameOffset = fbb.writeString(object.categoryName);
-          final parentIdOffset = fbb.writeString(object.parentId);
-          fbb.startTable(5);
-          fbb.addInt64(0, object.id);
-          fbb.addOffset(1, categoryIdOffset);
-          fbb.addOffset(2, categoryNameOffset);
-          fbb.addOffset(3, parentIdOffset);
-          fbb.finish(fbb.endTable());
-          return object.id;
-        },
-        objectFromFB: (obx.Store store, ByteData fbData) {
-          final buffer = fb.BufferContext(fbData);
-          final rootOffset = buffer.derefObject(0);
-          final categoryIdParam = const fb.StringReader(asciiOptimization: true)
-              .vTableGet(buffer, rootOffset, 6, '');
-          final categoryNameParam =
-              const fb.StringReader(asciiOptimization: true)
-                  .vTableGet(buffer, rootOffset, 8, '');
-          final parentIdParam = const fb.StringReader(asciiOptimization: true)
-              .vTableGet(buffer, rootOffset, 10, '');
-          final object = Category(
-              categoryId: categoryIdParam,
-              categoryName: categoryNameParam,
-              parentId: parentIdParam)
-            ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
-
-          return object;
-        }),
     Channel: obx_int.EntityDefinition<Channel>(
-        model: _entities[1],
+        model: _entities[0],
         toOneRelations: (Channel object) => [],
         toManyRelations: (Channel object) => {},
         getId: (Channel object) => object.id,
@@ -416,7 +369,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final streamIconOffset = fbb.writeString(object.streamIcon);
           final epgChannelIdOffset = fbb.writeString(object.epgChannelId);
           final categoryIdOffset = fbb.writeString(object.categoryId);
-          fbb.startTable(8);
+          final categoryNameOffset = fbb.writeString(object.categoryName);
+          fbb.startTable(9);
           fbb.addInt64(0, object.id);
           fbb.addOffset(1, streamIdOffset);
           fbb.addOffset(2, nameOffset);
@@ -424,6 +378,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           fbb.addOffset(4, epgChannelIdOffset);
           fbb.addOffset(5, categoryIdOffset);
           fbb.addBool(6, object.hasTvArchive);
+          fbb.addOffset(7, categoryNameOffset);
           fbb.finish(fbb.endTable());
           return object.id;
         },
@@ -441,6 +396,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
                   .vTableGet(buffer, rootOffset, 12, '');
           final categoryIdParam = const fb.StringReader(asciiOptimization: true)
               .vTableGet(buffer, rootOffset, 14, '');
+          final categoryNameParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGet(buffer, rootOffset, 18, '');
           final hasTvArchiveParam =
               const fb.BoolReader().vTableGet(buffer, rootOffset, 16, false);
           final object = Channel(
@@ -449,13 +407,14 @@ obx_int.ModelDefinition getObjectBoxModel() {
               streamIcon: streamIconParam,
               epgChannelId: epgChannelIdParam,
               categoryId: categoryIdParam,
+              categoryName: categoryNameParam,
               hasTvArchive: hasTvArchiveParam)
             ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
 
           return object;
         }),
     Movie: obx_int.EntityDefinition<Movie>(
-        model: _entities[2],
+        model: _entities[1],
         toOneRelations: (Movie object) => [],
         toManyRelations: (Movie object) => {},
         getId: (Movie object) => object.id,
@@ -491,7 +450,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
               object.tmdbId == null ? null : fbb.writeString(object.tmdbId!);
           final yearOffset =
               object.year == null ? null : fbb.writeString(object.year!);
-          fbb.startTable(17);
+          final categoryNameOffset = fbb.writeString(object.categoryName);
+          fbb.startTable(18);
           fbb.addInt64(0, object.id);
           fbb.addOffset(1, streamIdOffset);
           fbb.addOffset(2, nameOffset);
@@ -507,6 +467,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           fbb.addOffset(12, youtubeTrailerOffset);
           fbb.addOffset(13, tmdbIdOffset);
           fbb.addOffset(14, yearOffset);
+          fbb.addOffset(16, categoryNameOffset);
           fbb.finish(fbb.endTable());
           return object.id;
         },
@@ -524,6 +485,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
                   .vTableGet(buffer, rootOffset, 12, '');
           final categoryIdParam = const fb.StringReader(asciiOptimization: true)
               .vTableGet(buffer, rootOffset, 14, '');
+          final categoryNameParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGet(buffer, rootOffset, 36, '');
           final ratingParam = const fb.StringReader(asciiOptimization: true)
               .vTableGetNullable(buffer, rootOffset, 16);
           final plotParam = const fb.StringReader(asciiOptimization: true)
@@ -551,6 +515,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
               streamIcon: streamIconParam,
               containerExtension: containerExtensionParam,
               categoryId: categoryIdParam,
+              categoryName: categoryNameParam,
               rating: ratingParam,
               plot: plotParam,
               releaseDate: releaseDateParam,
@@ -565,7 +530,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           return object;
         }),
     ObjectBox: obx_int.EntityDefinition<ObjectBox>(
-        model: _entities[3],
+        model: _entities[2],
         toOneRelations: (ObjectBox object) => [],
         toManyRelations: (ObjectBox object) => {},
         getId: (ObjectBox object) => object.id,
@@ -588,7 +553,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           return object;
         }),
     Series: obx_int.EntityDefinition<Series>(
-        model: _entities[4],
+        model: _entities[3],
         toOneRelations: (Series object) => [],
         toManyRelations: (Series object) => {},
         getId: (Series object) => object.id,
@@ -611,7 +576,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final backdropPathOffset = object.backdropPath == null
               ? null
               : fbb.writeString(object.backdropPath!);
-          fbb.startTable(14);
+          final categoryNameOffset = fbb.writeString(object.categoryName);
+          fbb.startTable(15);
           fbb.addInt64(0, object.id);
           fbb.addOffset(1, seriesIdOffset);
           fbb.addOffset(2, nameOffset);
@@ -625,6 +591,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           fbb.addOffset(10, categoryIdOffset);
           fbb.addOffset(11, tmdbIdOffset);
           fbb.addOffset(12, backdropPathOffset);
+          fbb.addOffset(13, categoryNameOffset);
           fbb.finish(fbb.endTable());
           return object.id;
         },
@@ -652,6 +619,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
               .vTableGet(buffer, rootOffset, 22, '');
           final categoryIdParam = const fb.StringReader(asciiOptimization: true)
               .vTableGet(buffer, rootOffset, 24, '');
+          final categoryNameParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGet(buffer, rootOffset, 30, '');
           final tmdbIdParam = const fb.StringReader(asciiOptimization: true)
               .vTableGetNullable(buffer, rootOffset, 26);
           final backdropPathParam =
@@ -668,6 +638,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
               releaseDate: releaseDateParam,
               rating: ratingParam,
               categoryId: categoryIdParam,
+              categoryName: categoryNameParam,
               tmdbId: tmdbIdParam,
               backdropPath: backdropPathParam)
             ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
@@ -675,7 +646,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           return object;
         }),
     XtreamConnection: obx_int.EntityDefinition<XtreamConnection>(
-        model: _entities[5],
+        model: _entities[4],
         toOneRelations: (XtreamConnection object) => [],
         toManyRelations: (XtreamConnection object) => {},
         getId: (XtreamConnection object) => object.obId,
@@ -730,207 +701,200 @@ obx_int.ModelDefinition getObjectBoxModel() {
   return obx_int.ModelDefinition(model, bindings);
 }
 
-/// [Category] entity fields to define ObjectBox queries.
-class Category_ {
-  /// see [Category.id]
-  static final id =
-      obx.QueryIntegerProperty<Category>(_entities[0].properties[0]);
-
-  /// see [Category.categoryId]
-  static final categoryId =
-      obx.QueryStringProperty<Category>(_entities[0].properties[1]);
-
-  /// see [Category.categoryName]
-  static final categoryName =
-      obx.QueryStringProperty<Category>(_entities[0].properties[2]);
-
-  /// see [Category.parentId]
-  static final parentId =
-      obx.QueryStringProperty<Category>(_entities[0].properties[3]);
-}
-
 /// [Channel] entity fields to define ObjectBox queries.
 class Channel_ {
   /// see [Channel.id]
   static final id =
-      obx.QueryIntegerProperty<Channel>(_entities[1].properties[0]);
+      obx.QueryIntegerProperty<Channel>(_entities[0].properties[0]);
 
   /// see [Channel.streamId]
   static final streamId =
-      obx.QueryStringProperty<Channel>(_entities[1].properties[1]);
+      obx.QueryStringProperty<Channel>(_entities[0].properties[1]);
 
   /// see [Channel.name]
   static final name =
-      obx.QueryStringProperty<Channel>(_entities[1].properties[2]);
+      obx.QueryStringProperty<Channel>(_entities[0].properties[2]);
 
   /// see [Channel.streamIcon]
   static final streamIcon =
-      obx.QueryStringProperty<Channel>(_entities[1].properties[3]);
+      obx.QueryStringProperty<Channel>(_entities[0].properties[3]);
 
   /// see [Channel.epgChannelId]
   static final epgChannelId =
-      obx.QueryStringProperty<Channel>(_entities[1].properties[4]);
+      obx.QueryStringProperty<Channel>(_entities[0].properties[4]);
 
   /// see [Channel.categoryId]
   static final categoryId =
-      obx.QueryStringProperty<Channel>(_entities[1].properties[5]);
+      obx.QueryStringProperty<Channel>(_entities[0].properties[5]);
 
   /// see [Channel.hasTvArchive]
   static final hasTvArchive =
-      obx.QueryBooleanProperty<Channel>(_entities[1].properties[6]);
+      obx.QueryBooleanProperty<Channel>(_entities[0].properties[6]);
+
+  /// see [Channel.categoryName]
+  static final categoryName =
+      obx.QueryStringProperty<Channel>(_entities[0].properties[7]);
 }
 
 /// [Movie] entity fields to define ObjectBox queries.
 class Movie_ {
   /// see [Movie.id]
-  static final id = obx.QueryIntegerProperty<Movie>(_entities[2].properties[0]);
+  static final id = obx.QueryIntegerProperty<Movie>(_entities[1].properties[0]);
 
   /// see [Movie.streamId]
   static final streamId =
-      obx.QueryStringProperty<Movie>(_entities[2].properties[1]);
+      obx.QueryStringProperty<Movie>(_entities[1].properties[1]);
 
   /// see [Movie.name]
   static final name =
-      obx.QueryStringProperty<Movie>(_entities[2].properties[2]);
+      obx.QueryStringProperty<Movie>(_entities[1].properties[2]);
 
   /// see [Movie.streamIcon]
   static final streamIcon =
-      obx.QueryStringProperty<Movie>(_entities[2].properties[3]);
+      obx.QueryStringProperty<Movie>(_entities[1].properties[3]);
 
   /// see [Movie.containerExtension]
   static final containerExtension =
-      obx.QueryStringProperty<Movie>(_entities[2].properties[4]);
+      obx.QueryStringProperty<Movie>(_entities[1].properties[4]);
 
   /// see [Movie.categoryId]
   static final categoryId =
-      obx.QueryStringProperty<Movie>(_entities[2].properties[5]);
+      obx.QueryStringProperty<Movie>(_entities[1].properties[5]);
 
   /// see [Movie.rating]
   static final rating =
-      obx.QueryStringProperty<Movie>(_entities[2].properties[6]);
+      obx.QueryStringProperty<Movie>(_entities[1].properties[6]);
 
   /// see [Movie.plot]
   static final plot =
-      obx.QueryStringProperty<Movie>(_entities[2].properties[7]);
+      obx.QueryStringProperty<Movie>(_entities[1].properties[7]);
 
   /// see [Movie.releaseDate]
   static final releaseDate =
-      obx.QueryStringProperty<Movie>(_entities[2].properties[8]);
+      obx.QueryStringProperty<Movie>(_entities[1].properties[8]);
 
   /// see [Movie.director]
   static final director =
-      obx.QueryStringProperty<Movie>(_entities[2].properties[9]);
+      obx.QueryStringProperty<Movie>(_entities[1].properties[9]);
 
   /// see [Movie.actors]
   static final actors =
-      obx.QueryStringProperty<Movie>(_entities[2].properties[10]);
+      obx.QueryStringProperty<Movie>(_entities[1].properties[10]);
 
   /// see [Movie.backdropPath]
   static final backdropPath =
-      obx.QueryStringProperty<Movie>(_entities[2].properties[11]);
+      obx.QueryStringProperty<Movie>(_entities[1].properties[11]);
 
   /// see [Movie.youtubeTrailer]
   static final youtubeTrailer =
-      obx.QueryStringProperty<Movie>(_entities[2].properties[12]);
+      obx.QueryStringProperty<Movie>(_entities[1].properties[12]);
 
   /// see [Movie.tmdbId]
   static final tmdbId =
-      obx.QueryStringProperty<Movie>(_entities[2].properties[13]);
+      obx.QueryStringProperty<Movie>(_entities[1].properties[13]);
 
   /// see [Movie.year]
   static final year =
-      obx.QueryStringProperty<Movie>(_entities[2].properties[14]);
+      obx.QueryStringProperty<Movie>(_entities[1].properties[14]);
+
+  /// see [Movie.categoryName]
+  static final categoryName =
+      obx.QueryStringProperty<Movie>(_entities[1].properties[15]);
 }
 
 /// [ObjectBox] entity fields to define ObjectBox queries.
 class ObjectBox_ {
   /// see [ObjectBox.id]
   static final id =
-      obx.QueryIntegerProperty<ObjectBox>(_entities[3].properties[0]);
+      obx.QueryIntegerProperty<ObjectBox>(_entities[2].properties[0]);
 }
 
 /// [Series] entity fields to define ObjectBox queries.
 class Series_ {
   /// see [Series.id]
   static final id =
-      obx.QueryIntegerProperty<Series>(_entities[4].properties[0]);
+      obx.QueryIntegerProperty<Series>(_entities[3].properties[0]);
 
   /// see [Series.seriesId]
   static final seriesId =
-      obx.QueryStringProperty<Series>(_entities[4].properties[1]);
+      obx.QueryStringProperty<Series>(_entities[3].properties[1]);
 
   /// see [Series.name]
   static final name =
-      obx.QueryStringProperty<Series>(_entities[4].properties[2]);
+      obx.QueryStringProperty<Series>(_entities[3].properties[2]);
 
   /// see [Series.cover]
   static final cover =
-      obx.QueryStringProperty<Series>(_entities[4].properties[3]);
+      obx.QueryStringProperty<Series>(_entities[3].properties[3]);
 
   /// see [Series.plot]
   static final plot =
-      obx.QueryStringProperty<Series>(_entities[4].properties[4]);
+      obx.QueryStringProperty<Series>(_entities[3].properties[4]);
 
   /// see [Series.cast]
   static final cast =
-      obx.QueryStringProperty<Series>(_entities[4].properties[5]);
+      obx.QueryStringProperty<Series>(_entities[3].properties[5]);
 
   /// see [Series.director]
   static final director =
-      obx.QueryStringProperty<Series>(_entities[4].properties[6]);
+      obx.QueryStringProperty<Series>(_entities[3].properties[6]);
 
   /// see [Series.genre]
   static final genre =
-      obx.QueryStringProperty<Series>(_entities[4].properties[7]);
+      obx.QueryStringProperty<Series>(_entities[3].properties[7]);
 
   /// see [Series.releaseDate]
   static final releaseDate =
-      obx.QueryStringProperty<Series>(_entities[4].properties[8]);
+      obx.QueryStringProperty<Series>(_entities[3].properties[8]);
 
   /// see [Series.rating]
   static final rating =
-      obx.QueryStringProperty<Series>(_entities[4].properties[9]);
+      obx.QueryStringProperty<Series>(_entities[3].properties[9]);
 
   /// see [Series.categoryId]
   static final categoryId =
-      obx.QueryStringProperty<Series>(_entities[4].properties[10]);
+      obx.QueryStringProperty<Series>(_entities[3].properties[10]);
 
   /// see [Series.tmdbId]
   static final tmdbId =
-      obx.QueryStringProperty<Series>(_entities[4].properties[11]);
+      obx.QueryStringProperty<Series>(_entities[3].properties[11]);
 
   /// see [Series.backdropPath]
   static final backdropPath =
-      obx.QueryStringProperty<Series>(_entities[4].properties[12]);
+      obx.QueryStringProperty<Series>(_entities[3].properties[12]);
+
+  /// see [Series.categoryName]
+  static final categoryName =
+      obx.QueryStringProperty<Series>(_entities[3].properties[13]);
 }
 
 /// [XtreamConnection] entity fields to define ObjectBox queries.
 class XtreamConnection_ {
   /// see [XtreamConnection.obId]
   static final obId =
-      obx.QueryIntegerProperty<XtreamConnection>(_entities[5].properties[0]);
+      obx.QueryIntegerProperty<XtreamConnection>(_entities[4].properties[0]);
 
   /// see [XtreamConnection.id]
   static final id =
-      obx.QueryStringProperty<XtreamConnection>(_entities[5].properties[1]);
+      obx.QueryStringProperty<XtreamConnection>(_entities[4].properties[1]);
 
   /// see [XtreamConnection.name]
   static final name =
-      obx.QueryStringProperty<XtreamConnection>(_entities[5].properties[2]);
+      obx.QueryStringProperty<XtreamConnection>(_entities[4].properties[2]);
 
   /// see [XtreamConnection.serverUrl]
   static final serverUrl =
-      obx.QueryStringProperty<XtreamConnection>(_entities[5].properties[3]);
+      obx.QueryStringProperty<XtreamConnection>(_entities[4].properties[3]);
 
   /// see [XtreamConnection.username]
   static final username =
-      obx.QueryStringProperty<XtreamConnection>(_entities[5].properties[4]);
+      obx.QueryStringProperty<XtreamConnection>(_entities[4].properties[4]);
 
   /// see [XtreamConnection.password]
   static final password =
-      obx.QueryStringProperty<XtreamConnection>(_entities[5].properties[5]);
+      obx.QueryStringProperty<XtreamConnection>(_entities[4].properties[5]);
 
   /// see [XtreamConnection.addedDate]
   static final addedDate =
-      obx.QueryDateProperty<XtreamConnection>(_entities[5].properties[6]);
+      obx.QueryDateProperty<XtreamConnection>(_entities[4].properties[6]);
 }

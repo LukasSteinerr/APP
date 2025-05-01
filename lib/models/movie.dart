@@ -10,6 +10,7 @@ class Movie {
   String streamIcon;
   String containerExtension;
   String categoryId;
+  String categoryName;
   String? rating;
   String? plot;
   String? releaseDate;
@@ -26,6 +27,7 @@ class Movie {
     required this.streamIcon,
     required this.containerExtension,
     required this.categoryId,
+    required this.categoryName,
     this.rating,
     this.plot,
     this.releaseDate,
@@ -44,6 +46,7 @@ class Movie {
       streamIcon: json['stream_icon'] ?? '',
       containerExtension: json['container_extension'] ?? '',
       categoryId: json['category_id']?.toString() ?? '',
+      categoryName: json['category_name'] ?? '',
       rating: json['rating'],
       plot: json['plot'],
       releaseDate: json['releasedate'],
@@ -62,6 +65,7 @@ class Movie {
     'stream_icon': streamIcon,
     'container_extension': containerExtension,
     'category_id': categoryId,
+    'category_name': categoryName,
     'rating': rating,
     'plot': plot,
     'releasedate': releaseDate,

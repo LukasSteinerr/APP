@@ -1,7 +1,6 @@
-import 'package:flutter/foundation.dart' hide Category;
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-import '../models/category.dart';
 import '../models/channel.dart';
 import '../models/movie.dart';
 import '../models/series.dart';
@@ -15,9 +14,6 @@ class ObjectBoxService {
   static late Store _store;
 
   // Box instances for each entity
-  static late Box<Category> vodCategoriesBox;
-  static late Box<Category> seriesCategoriesBox;
-  static late Box<Category> liveCategoriesBox;
   static late Box<Movie> moviesBox;
   static late Box<Series> seriesBox;
   static late Box<Channel> channelsBox;
@@ -38,9 +34,6 @@ class ObjectBoxService {
       _store = await openStore(directory: databasePath);
 
       // Initialize boxes
-      vodCategoriesBox = Box<Category>(_store);
-      seriesCategoriesBox = Box<Category>(_store);
-      liveCategoriesBox = Box<Category>(_store);
       moviesBox = Box<Movie>(_store);
       seriesBox = Box<Series>(_store);
       channelsBox = Box<Channel>(_store);
@@ -67,99 +60,16 @@ class ObjectBoxService {
   static void checkPreloadedData() {
     try {
       // We'll use the presence of data in the boxes to determine if data is preloaded
-      final hasVodCategories = vodCategoriesBox.count() > 0;
-      final hasSeriesCategories = seriesCategoriesBox.count() > 0;
-      final hasLiveCategories = liveCategoriesBox.count() > 0;
       final hasMovies = moviesBox.count() > 0;
       final hasSeries = seriesBox.count() > 0;
       final hasChannels = channelsBox.count() > 0;
 
-      _hasPreloadedData =
-          hasVodCategories &&
-          hasSeriesCategories &&
-          hasLiveCategories &&
-          hasMovies &&
-          hasSeries &&
-          hasChannels;
+      _hasPreloadedData = hasMovies && hasSeries && hasChannels;
 
       debugPrint('OBJECTBOX SERVICE: Has preloaded data: $_hasPreloadedData');
     } catch (e) {
       debugPrint('OBJECTBOX SERVICE ERROR: Failed to check preloaded data: $e');
       _hasPreloadedData = false;
-    }
-  }
-
-  /// Save VOD categories to ObjectBox
-  static Future<void> saveVodCategories(
-    List<Category> categories,
-    String connectionId,
-  ) async {
-    try {
-      debugPrint(
-        'OBJECTBOX SERVICE: Saving ${categories.length} VOD categories',
-      );
-      // Clear existing data
-      vodCategoriesBox.removeAll();
-
-      // Add new data
-      vodCategoriesBox.putMany(categories);
-
-      // Save connection ID
-      _connectionId = connectionId;
-
-      debugPrint('OBJECTBOX SERVICE: VOD categories saved successfully');
-    } catch (e) {
-      debugPrint('OBJECTBOX SERVICE ERROR: Failed to save VOD categories: $e');
-    }
-  }
-
-  /// Save Series categories to ObjectBox
-  static Future<void> saveSeriesCategories(
-    List<Category> categories,
-    String connectionId,
-  ) async {
-    try {
-      debugPrint(
-        'OBJECTBOX SERVICE: Saving ${categories.length} Series categories',
-      );
-      // Clear existing data
-      seriesCategoriesBox.removeAll();
-
-      // Add new data
-      seriesCategoriesBox.putMany(categories);
-
-      // Save connection ID
-      _connectionId = connectionId;
-
-      debugPrint('OBJECTBOX SERVICE: Series categories saved successfully');
-    } catch (e) {
-      debugPrint(
-        'OBJECTBOX SERVICE ERROR: Failed to save Series categories: $e',
-      );
-    }
-  }
-
-  /// Save Live categories to ObjectBox
-  static Future<void> saveLiveCategories(
-    List<Category> categories,
-    String connectionId,
-  ) async {
-    try {
-      debugPrint(
-        'OBJECTBOX SERVICE: Saving ${categories.length} Live categories',
-      );
-      // Clear existing data
-      liveCategoriesBox.removeAll();
-
-      // Add new data
-      liveCategoriesBox.putMany(categories);
-
-      // Save connection ID
-      _connectionId = connectionId;
-
-      debugPrint('OBJECTBOX SERVICE: Live categories saved successfully');
-    } catch (e) {
-      debugPrint('OBJECTBOX SERVICE ERROR: Failed to save Live categories: $e');
     }
   }
 
@@ -261,38 +171,6 @@ class ObjectBoxService {
     }
   }
 
-  /// Get VOD categories from ObjectBox
-  static List<Category> getVodCategories() {
-    try {
-      return vodCategoriesBox.getAll();
-    } catch (e) {
-      debugPrint('OBJECTBOX SERVICE ERROR: Failed to get VOD categories: $e');
-      return [];
-    }
-  }
-
-  /// Get Series categories from ObjectBox
-  static List<Category> getSeriesCategories() {
-    try {
-      return seriesCategoriesBox.getAll();
-    } catch (e) {
-      debugPrint(
-        'OBJECTBOX SERVICE ERROR: Failed to get Series categories: $e',
-      );
-      return [];
-    }
-  }
-
-  /// Get Live categories from ObjectBox
-  static List<Category> getLiveCategories() {
-    try {
-      return liveCategoriesBox.getAll();
-    } catch (e) {
-      debugPrint('OBJECTBOX SERVICE ERROR: Failed to get Live categories: $e');
-      return [];
-    }
-  }
-
   /// Get Movies from ObjectBox
   static List<Movie> getMovies() {
     try {
@@ -329,9 +207,6 @@ class ObjectBoxService {
   static Future<void> clearAllData() async {
     try {
       debugPrint('OBJECTBOX SERVICE: Clearing all data');
-      vodCategoriesBox.removeAll();
-      seriesCategoriesBox.removeAll();
-      liveCategoriesBox.removeAll();
       moviesBox.removeAll();
       seriesBox.removeAll();
       channelsBox.removeAll();
@@ -412,9 +287,6 @@ class ObjectBoxService {
 
         if (isCurrentConnection) {
           // If this is the current connection, clear all content data
-          vodCategoriesBox.removeAll();
-          seriesCategoriesBox.removeAll();
-          liveCategoriesBox.removeAll();
           moviesBox.removeAll();
           seriesBox.removeAll();
           channelsBox.removeAll();
@@ -432,9 +304,6 @@ class ObjectBoxService {
           // 2. Clear all data
           // 3. Restore the current connection's data (if any)
 
-          List<Category> tempVodCategories = [];
-          List<Category> tempSeriesCategories = [];
-          List<Category> tempLiveCategories = [];
           List<Movie> tempMovies = [];
           List<Series> tempSeries = [];
           List<Channel> tempChannels = [];
@@ -444,28 +313,19 @@ class ObjectBoxService {
             debugPrint(
               'OBJECTBOX SERVICE: Temporarily saving current connection data',
             );
-            tempVodCategories = vodCategoriesBox.getAll();
-            tempSeriesCategories = seriesCategoriesBox.getAll();
-            tempLiveCategories = liveCategoriesBox.getAll();
             tempMovies = moviesBox.getAll();
             tempSeries = seriesBox.getAll();
             tempChannels = channelsBox.getAll();
           }
 
           // Clear all data
-          vodCategoriesBox.removeAll();
-          seriesCategoriesBox.removeAll();
-          liveCategoriesBox.removeAll();
           moviesBox.removeAll();
           seriesBox.removeAll();
           channelsBox.removeAll();
 
           // Restore current connection data if needed
-          if (currentConnectionId != null && tempVodCategories.isNotEmpty) {
+          if (currentConnectionId != null && tempMovies.isNotEmpty) {
             debugPrint('OBJECTBOX SERVICE: Restoring current connection data');
-            vodCategoriesBox.putMany(tempVodCategories);
-            seriesCategoriesBox.putMany(tempSeriesCategories);
-            liveCategoriesBox.putMany(tempLiveCategories);
             moviesBox.putMany(tempMovies);
             seriesBox.putMany(tempSeries);
             channelsBox.putMany(tempChannels);
@@ -498,9 +358,6 @@ class ObjectBoxService {
       );
 
       // Clear all content data
-      vodCategoriesBox.removeAll();
-      seriesCategoriesBox.removeAll();
-      liveCategoriesBox.removeAll();
       moviesBox.removeAll();
       seriesBox.removeAll();
       channelsBox.removeAll();

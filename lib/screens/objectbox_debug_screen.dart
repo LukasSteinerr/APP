@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../models/category.dart';
 import '../models/channel.dart';
 import '../models/movie.dart';
 import '../models/series.dart';
+import '../models/category_item.dart';
 import '../services/objectbox_service.dart';
 import '../utils/constants.dart';
 
@@ -34,11 +34,7 @@ class _ObjectBoxDebugScreenState extends State<ObjectBoxDebugScreen> {
 
   Future<void> _loadData() async {
     // Get counts from ObjectBox
-    final vodCategories = ObjectBoxService.getVodCategories().cast<Category>();
-    final seriesCategories =
-        ObjectBoxService.getSeriesCategories().cast<Category>();
-    final liveCategories =
-        ObjectBoxService.getLiveCategories().cast<Category>();
+    // Since we no longer have Category entities, we'll extract categories from content
     final movies = ObjectBoxService.getMovies().cast<Movie>();
     final series = ObjectBoxService.getSeries().cast<Series>();
     final channels = ObjectBoxService.getChannels().cast<Channel>();
@@ -46,10 +42,26 @@ class _ObjectBoxDebugScreenState extends State<ObjectBoxDebugScreen> {
     final hasPreloadedData = ObjectBoxService.hasPreloadedData();
     final databasePath = await ObjectBoxService.getObjectBoxDatabasePath();
 
+    // Extract unique categories from content
+    final vodCategoryIds = <String>{};
+    for (var movie in movies) {
+      vodCategoryIds.add(movie.categoryId);
+    }
+
+    final seriesCategoryIds = <String>{};
+    for (var s in series) {
+      seriesCategoryIds.add(s.categoryId);
+    }
+
+    final liveCategoryIds = <String>{};
+    for (var channel in channels) {
+      liveCategoryIds.add(channel.categoryId);
+    }
+
     setState(() {
-      _vodCategoriesCount = vodCategories.length;
-      _seriesCategoriesCount = seriesCategories.length;
-      _liveCategoriesCount = liveCategories.length;
+      _vodCategoriesCount = vodCategoryIds.length;
+      _seriesCategoriesCount = seriesCategoryIds.length;
+      _liveCategoriesCount = liveCategoryIds.length;
       _moviesCount = movies.length;
       _seriesCount = series.length;
       _channelsCount = channels.length;
@@ -245,6 +257,16 @@ class _ObjectBoxDebugScreenState extends State<ObjectBoxDebugScreen> {
   }
 
   Widget _buildDataSamplesSection() {
+    // Get data from ObjectBox
+    final movies = ObjectBoxService.getMovies().cast<Movie>();
+    final series = ObjectBoxService.getSeries().cast<Series>();
+    final channels = ObjectBoxService.getChannels().cast<Channel>();
+
+    // Extract categories from content
+    final vodCategories = _extractVodCategories(movies);
+    final seriesCategories = _extractSeriesCategories(series);
+    final liveCategories = _extractLiveCategories(channels);
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(AppPaddings.medium),
@@ -255,49 +277,27 @@ class _ObjectBoxDebugScreenState extends State<ObjectBoxDebugScreen> {
             const Divider(),
             ExpansionTile(
               title: const Text('VOD Categories'),
-              children: [
-                _buildCategorySamples(
-                  ObjectBoxService.getVodCategories().cast<Category>(),
-                ),
-              ],
+              children: [_buildCategoryItemSamples(vodCategories)],
             ),
             ExpansionTile(
               title: const Text('Movies'),
-              children: [
-                _buildMovieSamples(ObjectBoxService.getMovies().cast<Movie>()),
-              ],
+              children: [_buildMovieSamples(movies)],
             ),
             ExpansionTile(
               title: const Text('Series Categories'),
-              children: [
-                _buildCategorySamples(
-                  ObjectBoxService.getSeriesCategories().cast<Category>(),
-                ),
-              ],
+              children: [_buildCategoryItemSamples(seriesCategories)],
             ),
             ExpansionTile(
               title: const Text('Series'),
-              children: [
-                _buildSeriesSamples(
-                  ObjectBoxService.getSeries().cast<Series>(),
-                ),
-              ],
+              children: [_buildSeriesSamples(series)],
             ),
             ExpansionTile(
               title: const Text('Live Categories'),
-              children: [
-                _buildCategorySamples(
-                  ObjectBoxService.getLiveCategories().cast<Category>(),
-                ),
-              ],
+              children: [_buildCategoryItemSamples(liveCategories)],
             ),
             ExpansionTile(
               title: const Text('Channels'),
-              children: [
-                _buildChannelSamples(
-                  ObjectBoxService.getChannels().cast<Channel>(),
-                ),
-              ],
+              children: [_buildChannelSamples(channels)],
             ),
           ],
         ),
@@ -305,7 +305,38 @@ class _ObjectBoxDebugScreenState extends State<ObjectBoxDebugScreen> {
     );
   }
 
-  Widget _buildCategorySamples(List<Category> categories) {
+  // Helper methods to extract categories from content
+  List<CategoryItem> _extractVodCategories(List<Movie> movies) {
+    final categoryMap = <String, String>{};
+    for (var movie in movies) {
+      categoryMap[movie.categoryId] = movie.categoryName;
+    }
+    return categoryMap.entries
+        .map((e) => CategoryItem(categoryId: e.key, categoryName: e.value))
+        .toList();
+  }
+
+  List<CategoryItem> _extractSeriesCategories(List<Series> seriesList) {
+    final categoryMap = <String, String>{};
+    for (var series in seriesList) {
+      categoryMap[series.categoryId] = series.categoryName;
+    }
+    return categoryMap.entries
+        .map((e) => CategoryItem(categoryId: e.key, categoryName: e.value))
+        .toList();
+  }
+
+  List<CategoryItem> _extractLiveCategories(List<Channel> channels) {
+    final categoryMap = <String, String>{};
+    for (var channel in channels) {
+      categoryMap[channel.categoryId] = channel.categoryName;
+    }
+    return categoryMap.entries
+        .map((e) => CategoryItem(categoryId: e.key, categoryName: e.value))
+        .toList();
+  }
+
+  Widget _buildCategoryItemSamples(List<CategoryItem> categories) {
     if (categories.isEmpty) {
       return const Padding(
         padding: EdgeInsets.all(AppPaddings.medium),
@@ -352,7 +383,9 @@ class _ObjectBoxDebugScreenState extends State<ObjectBoxDebugScreen> {
                   )
                   : const Icon(Icons.movie),
           title: Text(movie.name),
-          subtitle: Text('Category: ${movie.categoryId}'),
+          subtitle: Text(
+            'Category: ${movie.categoryName} (ID: ${movie.categoryId})',
+          ),
         );
       },
     );
@@ -383,7 +416,9 @@ class _ObjectBoxDebugScreenState extends State<ObjectBoxDebugScreen> {
                   )
                   : const Icon(Icons.tv),
           title: Text(series.name),
-          subtitle: Text('Category: ${series.categoryId}'),
+          subtitle: Text(
+            'Category: ${series.categoryName} (ID: ${series.categoryId})',
+          ),
         );
       },
     );
@@ -414,7 +449,9 @@ class _ObjectBoxDebugScreenState extends State<ObjectBoxDebugScreen> {
                   )
                   : const Icon(Icons.live_tv),
           title: Text(channel.name),
-          subtitle: Text('Category: ${channel.categoryId}'),
+          subtitle: Text(
+            'Category: ${channel.categoryName} (ID: ${channel.categoryId})',
+          ),
         );
       },
     );

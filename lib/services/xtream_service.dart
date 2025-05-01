@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/category.dart';
+import '../models/category_item.dart';
 import '../models/channel.dart';
 import '../models/movie.dart';
 import '../models/series.dart';
 import '../services/compute_service.dart';
+
+enum CategoryType { live, vod, series }
 
 class XtreamService {
   final String serverUrl;
@@ -35,7 +37,7 @@ class XtreamService {
   }
 
   // Get live stream categories
-  Future<List<Category>> getLiveCategories() async {
+  Future<List<CategoryItem>> getLiveCategories() async {
     try {
       final response = await http.get(
         Uri.parse('$_baseUrl&action=get_live_categories'),
@@ -43,7 +45,14 @@ class XtreamService {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        return data.map((item) => Category.fromJson(item)).toList();
+        return data
+            .map(
+              (item) => CategoryItem(
+                categoryId: item['category_id']?.toString() ?? '',
+                categoryName: item['category_name'] ?? '',
+              ),
+            )
+            .toList();
       } else {
         throw Exception(
           'Failed to load live categories: ${response.statusCode}',
@@ -57,16 +66,25 @@ class XtreamService {
   // Get live streams by category
   Future<List<Channel>> getLiveStreamsByCategory(String categoryId) async {
     try {
+      // First get the category name
+      String categoryName = await _getCategoryName(
+        categoryId,
+        CategoryType.live,
+      );
+
       final response = await http.get(
         Uri.parse('$_baseUrl&action=get_live_streams&category_id=$categoryId'),
       );
 
       if (response.statusCode == 200) {
-        // Use isolate to parse JSON and create model objects
-        return await ComputeService.compute<String, List<Channel>>(
-          _parseLiveStreams,
-          response.body,
-        );
+        // Use isolate to parse JSON and create model objects with category name
+        return await ComputeService.compute<
+          Map<String, dynamic>,
+          List<Channel>
+        >(_parseLiveStreamsWithCategory, {
+          'responseBody': response.body,
+          'categoryName': categoryName,
+        });
       } else {
         throw Exception('Failed to load live streams: ${response.statusCode}');
       }
@@ -75,25 +93,82 @@ class XtreamService {
     }
   }
 
-  // Static method for parsing live streams in isolate
-  static List<Channel> _parseLiveStreams(String responseBody) {
+  // Helper method to get category name from category ID
+  Future<String> _getCategoryName(String categoryId, CategoryType type) async {
+    try {
+      List<CategoryItem> categories;
+
+      // Get the appropriate categories based on type
+      switch (type) {
+        case CategoryType.live:
+          categories = await getLiveCategories();
+          break;
+        case CategoryType.vod:
+          categories = await getVodCategories();
+          break;
+        case CategoryType.series:
+          categories = await getSeriesCategories();
+          break;
+      }
+
+      // Find the category with the matching ID
+      final category = categories.firstWhere(
+        (c) => c.categoryId == categoryId,
+        orElse:
+            () => CategoryItem(
+              categoryId: categoryId,
+              categoryName: 'Unknown Category',
+            ),
+      );
+
+      return category.categoryName;
+    } catch (e) {
+      // Return a default value if there's an error
+      return 'Unknown Category';
+    }
+  }
+
+  // Static method for parsing live streams with category name in isolate
+  static List<Channel> _parseLiveStreamsWithCategory(
+    Map<String, dynamic> params,
+  ) {
+    final String responseBody = params['responseBody'];
+    final String categoryName = params['categoryName'];
+
     final List<dynamic> data = json.decode(responseBody);
-    return data.map((item) => Channel.fromJson(item)).toList();
+    return data.map((item) {
+      // Add category name to the JSON before creating the Channel object
+      final Map<String, dynamic> itemWithCategory = Map<String, dynamic>.from(
+        item,
+      );
+      itemWithCategory['category_name'] = categoryName;
+      return Channel.fromJson(itemWithCategory);
+    }).toList();
   }
 
   // Get all live streams
   Future<List<Channel>> getAllLiveStreams() async {
     try {
+      // First get all categories to map category IDs to names
+      final categories = await getLiveCategories();
+      final Map<String, String> categoryMap = {
+        for (var category in categories)
+          category.categoryId: category.categoryName,
+      };
+
       final response = await http.get(
         Uri.parse('$_baseUrl&action=get_live_streams'),
       );
 
       if (response.statusCode == 200) {
-        // Use isolate to parse JSON and create model objects
-        return await ComputeService.compute<String, List<Channel>>(
-          _parseLiveStreams,
-          response.body,
-        );
+        // Use isolate to parse JSON and create model objects with category names
+        return await ComputeService.compute<
+          Map<String, dynamic>,
+          List<Channel>
+        >(_parseAllLiveStreamsWithCategories, {
+          'responseBody': response.body,
+          'categoryMap': categoryMap,
+        });
       } else {
         throw Exception(
           'Failed to load all live streams: ${response.statusCode}',
@@ -104,8 +179,28 @@ class XtreamService {
     }
   }
 
+  // Static method for parsing all live streams with category names in isolate
+  static List<Channel> _parseAllLiveStreamsWithCategories(
+    Map<String, dynamic> params,
+  ) {
+    final String responseBody = params['responseBody'];
+    final Map<String, String> categoryMap = params['categoryMap'];
+
+    final List<dynamic> data = json.decode(responseBody);
+    return data.map((item) {
+      // Add category name to the JSON before creating the Channel object
+      final Map<String, dynamic> itemWithCategory = Map<String, dynamic>.from(
+        item,
+      );
+      final String categoryId = item['category_id']?.toString() ?? '';
+      itemWithCategory['category_name'] =
+          categoryMap[categoryId] ?? 'Unknown Category';
+      return Channel.fromJson(itemWithCategory);
+    }).toList();
+  }
+
   // Get VOD categories
-  Future<List<Category>> getVodCategories() async {
+  Future<List<CategoryItem>> getVodCategories() async {
     try {
       final response = await http.get(
         Uri.parse('$_baseUrl&action=get_vod_categories'),
@@ -113,7 +208,14 @@ class XtreamService {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        return data.map((item) => Category.fromJson(item)).toList();
+        return data
+            .map(
+              (item) => CategoryItem(
+                categoryId: item['category_id']?.toString() ?? '',
+                categoryName: item['category_name'] ?? '',
+              ),
+            )
+            .toList();
       } else {
         throw Exception(
           'Failed to load VOD categories: ${response.statusCode}',
@@ -127,15 +229,21 @@ class XtreamService {
   // Get VOD streams by category
   Future<List<Movie>> getVodStreamsByCategory(String categoryId) async {
     try {
+      // First get the category name
+      String categoryName = await _getCategoryName(
+        categoryId,
+        CategoryType.vod,
+      );
+
       final response = await http.get(
         Uri.parse('$_baseUrl&action=get_vod_streams&category_id=$categoryId'),
       );
 
       if (response.statusCode == 200) {
-        // Use isolate to parse JSON and create model objects
-        return await ComputeService.compute<String, List<Movie>>(
-          _parseMovies,
-          response.body,
+        // Use isolate to parse JSON and create model objects with category name
+        return await ComputeService.compute<Map<String, dynamic>, List<Movie>>(
+          _parseMoviesWithCategory,
+          {'responseBody': response.body, 'categoryName': categoryName},
         );
       } else {
         throw Exception('Failed to load VOD streams: ${response.statusCode}');
@@ -145,14 +253,24 @@ class XtreamService {
     }
   }
 
-  // Static method for parsing movies in isolate
-  static List<Movie> _parseMovies(String responseBody) {
+  // Static method for parsing movies with category name in isolate
+  static List<Movie> _parseMoviesWithCategory(Map<String, dynamic> params) {
+    final String responseBody = params['responseBody'];
+    final String categoryName = params['categoryName'];
+
     final List<dynamic> data = json.decode(responseBody);
-    return data.map((item) => Movie.fromJson(item)).toList();
+    return data.map((item) {
+      // Add category name to the JSON before creating the Movie object
+      final Map<String, dynamic> itemWithCategory = Map<String, dynamic>.from(
+        item,
+      );
+      itemWithCategory['category_name'] = categoryName;
+      return Movie.fromJson(itemWithCategory);
+    }).toList();
   }
 
   // Get series categories
-  Future<List<Category>> getSeriesCategories() async {
+  Future<List<CategoryItem>> getSeriesCategories() async {
     try {
       final response = await http.get(
         Uri.parse('$_baseUrl&action=get_series_categories'),
@@ -160,7 +278,14 @@ class XtreamService {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        return data.map((item) => Category.fromJson(item)).toList();
+        return data
+            .map(
+              (item) => CategoryItem(
+                categoryId: item['category_id']?.toString() ?? '',
+                categoryName: item['category_name'] ?? '',
+              ),
+            )
+            .toList();
       } else {
         throw Exception(
           'Failed to load series categories: ${response.statusCode}',
@@ -174,15 +299,21 @@ class XtreamService {
   // Get series by category
   Future<List<Series>> getSeriesByCategory(String categoryId) async {
     try {
+      // First get the category name
+      String categoryName = await _getCategoryName(
+        categoryId,
+        CategoryType.series,
+      );
+
       final response = await http.get(
         Uri.parse('$_baseUrl&action=get_series&category_id=$categoryId'),
       );
 
       if (response.statusCode == 200) {
-        // Use isolate to parse JSON and create model objects
-        return await ComputeService.compute<String, List<Series>>(
-          _parseSeries,
-          response.body,
+        // Use isolate to parse JSON and create model objects with category name
+        return await ComputeService.compute<Map<String, dynamic>, List<Series>>(
+          _parseSeriesWithCategory,
+          {'responseBody': response.body, 'categoryName': categoryName},
         );
       } else {
         throw Exception('Failed to load series: ${response.statusCode}');
@@ -192,10 +323,20 @@ class XtreamService {
     }
   }
 
-  // Static method for parsing series in isolate
-  static List<Series> _parseSeries(String responseBody) {
+  // Static method for parsing series with category name in isolate
+  static List<Series> _parseSeriesWithCategory(Map<String, dynamic> params) {
+    final String responseBody = params['responseBody'];
+    final String categoryName = params['categoryName'];
+
     final List<dynamic> data = json.decode(responseBody);
-    return data.map((item) => Series.fromJson(item)).toList();
+    return data.map((item) {
+      // Add category name to the JSON before creating the Series object
+      final Map<String, dynamic> itemWithCategory = Map<String, dynamic>.from(
+        item,
+      );
+      itemWithCategory['category_name'] = categoryName;
+      return Series.fromJson(itemWithCategory);
+    }).toList();
   }
 
   // Get series info

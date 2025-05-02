@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+import '../models/category.dart' as models;
 import '../models/channel.dart';
 import '../models/movie.dart';
 import '../models/series.dart';
@@ -18,6 +19,7 @@ class ObjectBoxService {
   static late Box<Series> seriesBox;
   static late Box<Channel> channelsBox;
   static late Box<XtreamConnection> connectionsBox;
+  static late Box<models.Category> categoriesBox;
 
   // Flag to track if data has been preloaded
   static bool _hasPreloadedData = false;
@@ -38,6 +40,7 @@ class ObjectBoxService {
       seriesBox = Box<Series>(_store);
       channelsBox = Box<Channel>(_store);
       connectionsBox = Box<XtreamConnection>(_store);
+      categoriesBox = Box<models.Category>(_store);
 
       // Initialize ObjectBox Admin interface
       ObjectBoxAdmin.initialize(_store);
@@ -201,6 +204,72 @@ class ObjectBoxService {
     }
   }
 
+  /// Save Categories to ObjectBox
+  static Future<void> saveCategories(
+    List<models.Category> categories,
+    String connectionId,
+  ) async {
+    try {
+      debugPrint('OBJECTBOX SERVICE: Saving ${categories.length} Categories');
+      // Clear existing data
+      categoriesBox.removeAll();
+
+      // Add new data
+      categoriesBox.putMany(categories);
+
+      // Save connection ID
+      _connectionId = connectionId;
+
+      debugPrint('OBJECTBOX SERVICE: Categories saved successfully');
+    } catch (e) {
+      debugPrint('OBJECTBOX SERVICE ERROR: Failed to save Categories: $e');
+    }
+  }
+
+  /// Get Categories from ObjectBox
+  static List<models.Category> getCategories() {
+    try {
+      return categoriesBox.getAll();
+    } catch (e) {
+      debugPrint('OBJECTBOX SERVICE ERROR: Failed to get Categories: $e');
+      return [];
+    }
+  }
+
+  /// Get Categories by content type
+  static List<models.Category> getCategoriesByType(String contentType) {
+    try {
+      final query =
+          categoriesBox
+              .query(Category_.contentType.equals(contentType))
+              .build();
+      final categories = query.find();
+      query.close();
+      return categories;
+    } catch (e) {
+      debugPrint(
+        'OBJECTBOX SERVICE ERROR: Failed to get Categories by type: $e',
+      );
+      return [];
+    }
+  }
+
+  /// Get Categories by playlist ID
+  static List<models.Category> getCategoriesByPlaylistId(int playlistId) {
+    try {
+      final query =
+          categoriesBox.query(Category_.playlistId.equals(playlistId)).build();
+      final categories = query.find();
+      query.close();
+      return categories;
+    } catch (e) {
+      debugPrint(
+        'OBJECTBOX SERVICE ERROR: Failed to get Categories by playlist ID: $e',
+      );
+      return [];
+    }
+  }
+
   // The updateMovie method has been removed as favorites functionality has been removed.
 
   /// Clear all data
@@ -210,6 +279,7 @@ class ObjectBoxService {
       moviesBox.removeAll();
       seriesBox.removeAll();
       channelsBox.removeAll();
+      categoriesBox.removeAll();
       connectionsBox.removeAll();
       _hasPreloadedData = false;
       _connectionId = null;
@@ -290,6 +360,7 @@ class ObjectBoxService {
           moviesBox.removeAll();
           seriesBox.removeAll();
           channelsBox.removeAll();
+          categoriesBox.removeAll();
 
           // Reset preloaded data flag and connection ID
           _hasPreloadedData = false;
@@ -322,6 +393,7 @@ class ObjectBoxService {
           moviesBox.removeAll();
           seriesBox.removeAll();
           channelsBox.removeAll();
+          categoriesBox.removeAll();
 
           // Restore current connection data if needed
           if (currentConnectionId != null && tempMovies.isNotEmpty) {
@@ -361,6 +433,7 @@ class ObjectBoxService {
       moviesBox.removeAll();
       seriesBox.removeAll();
       channelsBox.removeAll();
+      categoriesBox.removeAll();
 
       // Reset preloaded data flag and connection ID
       _hasPreloadedData = false;

@@ -15,13 +15,13 @@ class ContentCarousel extends StatelessWidget {
   final int itemCount;
 
   const ContentCarousel({
-    Key? key,
+    super.key,
     required this.title,
     required this.items,
     required this.onItemTap,
     required this.contentType,
     this.itemCount = 10,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

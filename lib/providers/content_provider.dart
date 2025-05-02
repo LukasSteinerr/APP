@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../models/category.dart' as models;
 import '../models/channel.dart';
 import '../models/movie.dart';
 import '../models/series.dart';
@@ -48,7 +49,7 @@ class ContentProvider with ChangeNotifier {
   String? get error => _error;
 
   // Set current connection
-  void setConnection(XtreamConnection connection) {
+  Future<void> setConnection(XtreamConnection connection) async {
     final stopwatch = Stopwatch()..start();
     debugPrint('TIMING: setConnection started');
 
@@ -65,7 +66,7 @@ class ContentProvider with ChangeNotifier {
     );
 
     // Check if we have cached data for this connection
-    _checkForCachedData(connection.id);
+    await _checkForCachedData(connection.id);
 
     debugPrint(
       'TIMING: setConnection completed in ${stopwatch.elapsedMilliseconds}ms',
@@ -74,7 +75,7 @@ class ContentProvider with ChangeNotifier {
   }
 
   // Check for cached data in ObjectBox
-  void _checkForCachedData(String connectionId) {
+  Future<void> _checkForCachedData(String connectionId) async {
     final stopwatch = Stopwatch()..start();
 
     debugPrint(
@@ -183,6 +184,10 @@ class ContentProvider with ChangeNotifier {
 
       // Update the connection ID in the database to match the current one
       ObjectBoxService.saveConnectionId(connectionId);
+
+      // Extract and save categories from the loaded content
+      await extractAndSaveCategories();
+
       debugPrint(
         'CONTENT PROVIDER: Updated connection ID in database to $connectionId',
       );
@@ -219,7 +224,7 @@ class ContentProvider with ChangeNotifier {
 
       // Load data from ObjectBox
       if (_currentConnection != null) {
-        _checkForCachedData(_currentConnection!.id);
+        await _checkForCachedData(_currentConnection!.id);
         debugPrint(
           'TIMING: _canMakeApiCalls completed in ${stopwatch.elapsedMilliseconds}ms (loaded from database)',
         );
@@ -252,7 +257,7 @@ class ContentProvider with ChangeNotifier {
 
           // Load data from ObjectBox if not already loaded
           if (!_hasPreloadedData) {
-            _checkForCachedData(_currentConnection!.id);
+            await _checkForCachedData(_currentConnection!.id);
           }
 
           debugPrint(
@@ -387,6 +392,10 @@ class ContentProvider with ChangeNotifier {
           _liveChannels,
           _currentConnection!.id,
         );
+
+        // Extract and save categories
+        await extractAndSaveCategories();
+
         ObjectBoxService.setPreloadedDataFlag(true);
         debugPrint('CONTENT PROVIDER: Data saved to ObjectBox successfully');
       }
@@ -768,5 +777,96 @@ class ContentProvider with ChangeNotifier {
     }
 
     return _xtreamService!.getSeriesStreamUrl(streamId);
+  }
+
+  // Extract and save categories from content
+  Future<void> extractAndSaveCategories() async {
+    debugPrint('CONTENT PROVIDER: Extracting and saving categories');
+
+    if (_currentConnection == null) {
+      debugPrint(
+        'CONTENT PROVIDER: Cannot extract categories - no active connection',
+      );
+      return;
+    }
+
+    try {
+      final List<models.Category> allCategories = [];
+
+      // Extract VOD categories
+      if (_vodCategories.isNotEmpty) {
+        debugPrint(
+          'CONTENT PROVIDER: Extracting ${_vodCategories.length} VOD categories',
+        );
+        final vodCats =
+            _vodCategories
+                .map(
+                  (cat) => models.Category(
+                    categoryId: cat.categoryId,
+                    categoryName: cat.categoryName,
+                    contentType: 'vod',
+                    playlistId: _currentConnection!.obId,
+                  ),
+                )
+                .toList();
+        allCategories.addAll(vodCats);
+      }
+
+      // Extract Live categories
+      if (_liveCategories.isNotEmpty) {
+        debugPrint(
+          'CONTENT PROVIDER: Extracting ${_liveCategories.length} Live categories',
+        );
+        final liveCats =
+            _liveCategories
+                .map(
+                  (cat) => models.Category(
+                    categoryId: cat.categoryId,
+                    categoryName: cat.categoryName,
+                    contentType: 'live',
+                    playlistId: _currentConnection!.obId,
+                  ),
+                )
+                .toList();
+        allCategories.addAll(liveCats);
+      }
+
+      // Extract Series categories
+      if (_seriesCategories.isNotEmpty) {
+        debugPrint(
+          'CONTENT PROVIDER: Extracting ${_seriesCategories.length} Series categories',
+        );
+        final seriesCats =
+            _seriesCategories
+                .map(
+                  (cat) => models.Category(
+                    categoryId: cat.categoryId,
+                    categoryName: cat.categoryName,
+                    contentType: 'series',
+                    playlistId: _currentConnection!.obId,
+                  ),
+                )
+                .toList();
+        allCategories.addAll(seriesCats);
+      }
+
+      // Save categories to ObjectBox
+      if (allCategories.isNotEmpty) {
+        debugPrint(
+          'CONTENT PROVIDER: Saving ${allCategories.length} categories to ObjectBox',
+        );
+        await ObjectBoxService.saveCategories(
+          allCategories,
+          _currentConnection!.id,
+        );
+        debugPrint('CONTENT PROVIDER: Categories saved successfully');
+      } else {
+        debugPrint('CONTENT PROVIDER: No categories to save');
+      }
+    } catch (e) {
+      debugPrint(
+        'CONTENT PROVIDER ERROR: Failed to extract and save categories: $e',
+      );
+    }
   }
 }

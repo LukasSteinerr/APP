@@ -10,6 +10,7 @@ import '../widgets/loading_indicator.dart';
 import 'add_connection_screen.dart';
 import 'main_screen.dart';
 import 'database_test_screen.dart';
+import 'category_test_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -22,7 +23,7 @@ class HomeScreen extends StatelessWidget {
         title: const Text(AppStrings.appName),
         backgroundColor: AppColors.primaryDark,
         actions: [
-          // Add a menu button to access the database test screen
+          // Add a menu button to access test screens
           PopupMenuButton<String>(
             onSelected: (value) {
               if (value == 'database_test') {
@@ -32,6 +33,13 @@ class HomeScreen extends StatelessWidget {
                     builder: (context) => const DatabaseTestScreen(),
                   ),
                 );
+              } else if (value == 'category_test') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CategoryTestScreen(),
+                  ),
+                );
               }
             },
             itemBuilder:
@@ -39,6 +47,10 @@ class HomeScreen extends StatelessWidget {
                   const PopupMenuItem<String>(
                     value: 'database_test',
                     child: Text('Database Test'),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'category_test',
+                    child: Text('Category Test'),
                   ),
                 ],
           ),

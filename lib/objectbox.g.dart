@@ -15,6 +15,7 @@ import 'package:objectbox/internal.dart'
 import 'package:objectbox/objectbox.dart' as obx;
 import 'package:objectbox_flutter_libs/objectbox_flutter_libs.dart';
 
+import 'models/category.dart';
 import 'models/channel.dart';
 import 'models/movie.dart';
 import 'models/series.dart';
@@ -298,6 +299,45 @@ final _entities = <obx_int.ModelEntity>[
             flags: 0)
       ],
       relations: <obx_int.ModelRelation>[],
+      backlinks: <obx_int.ModelBacklink>[]),
+  obx_int.ModelEntity(
+      id: const obx_int.IdUid(7, 2318150060902162151),
+      name: 'Category',
+      lastPropertyId: const obx_int.IdUid(6, 270301621249010508),
+      flags: 0,
+      properties: <obx_int.ModelProperty>[
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(1, 6355096197913493014),
+            name: 'id',
+            type: 6,
+            flags: 1),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(2, 6974840822026493455),
+            name: 'playlistId',
+            type: 6,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(3, 431249211138117482),
+            name: 'categoryId',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(4, 1326148488879503536),
+            name: 'categoryName',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(5, 7584341946887205116),
+            name: 'contentType',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(6, 270301621249010508),
+            name: 'parentId',
+            type: 6,
+            flags: 0)
+      ],
+      relations: <obx_int.ModelRelation>[],
       backlinks: <obx_int.ModelBacklink>[])
 ];
 
@@ -336,7 +376,7 @@ Future<obx.Store> openStore(
 obx_int.ModelDefinition getObjectBoxModel() {
   final model = obx_int.ModelInfo(
       entities: _entities,
-      lastEntityId: const obx_int.IdUid(6, 7371614030397791025),
+      lastEntityId: const obx_int.IdUid(7, 2318150060902162151),
       lastIndexId: const obx_int.IdUid(0, 0),
       lastRelationId: const obx_int.IdUid(0, 0),
       lastSequenceId: const obx_int.IdUid(0, 0),
@@ -695,6 +735,53 @@ obx_int.ModelDefinition getObjectBoxModel() {
             ..obId = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
 
           return object;
+        }),
+    Category: obx_int.EntityDefinition<Category>(
+        model: _entities[5],
+        toOneRelations: (Category object) => [],
+        toManyRelations: (Category object) => {},
+        getId: (Category object) => object.id,
+        setId: (Category object, int id) {
+          object.id = id;
+        },
+        objectToFB: (Category object, fb.Builder fbb) {
+          final categoryIdOffset = fbb.writeString(object.categoryId);
+          final categoryNameOffset = fbb.writeString(object.categoryName);
+          final contentTypeOffset = fbb.writeString(object.contentType);
+          fbb.startTable(7);
+          fbb.addInt64(0, object.id);
+          fbb.addInt64(1, object.playlistId);
+          fbb.addOffset(2, categoryIdOffset);
+          fbb.addOffset(3, categoryNameOffset);
+          fbb.addOffset(4, contentTypeOffset);
+          fbb.addInt64(5, object.parentId);
+          fbb.finish(fbb.endTable());
+          return object.id;
+        },
+        objectFromFB: (obx.Store store, ByteData fbData) {
+          final buffer = fb.BufferContext(fbData);
+          final rootOffset = buffer.derefObject(0);
+          final categoryIdParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 8, '');
+          final categoryNameParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGet(buffer, rootOffset, 10, '');
+          final contentTypeParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGet(buffer, rootOffset, 12, '');
+          final playlistIdParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 6);
+          final parentIdParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 14);
+          final object = Category(
+              categoryId: categoryIdParam,
+              categoryName: categoryNameParam,
+              contentType: contentTypeParam,
+              playlistId: playlistIdParam,
+              parentId: parentIdParam)
+            ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
+
+          return object;
         })
   };
 
@@ -897,4 +984,31 @@ class XtreamConnection_ {
   /// see [XtreamConnection.addedDate]
   static final addedDate =
       obx.QueryDateProperty<XtreamConnection>(_entities[4].properties[6]);
+}
+
+/// [Category] entity fields to define ObjectBox queries.
+class Category_ {
+  /// see [Category.id]
+  static final id =
+      obx.QueryIntegerProperty<Category>(_entities[5].properties[0]);
+
+  /// see [Category.playlistId]
+  static final playlistId =
+      obx.QueryIntegerProperty<Category>(_entities[5].properties[1]);
+
+  /// see [Category.categoryId]
+  static final categoryId =
+      obx.QueryStringProperty<Category>(_entities[5].properties[2]);
+
+  /// see [Category.categoryName]
+  static final categoryName =
+      obx.QueryStringProperty<Category>(_entities[5].properties[3]);
+
+  /// see [Category.contentType]
+  static final contentType =
+      obx.QueryStringProperty<Category>(_entities[5].properties[4]);
+
+  /// see [Category.parentId]
+  static final parentId =
+      obx.QueryIntegerProperty<Category>(_entities[5].properties[5]);
 }

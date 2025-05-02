@@ -277,9 +277,48 @@
         }
       ],
       "relations": []
+    },
+    {
+      "id": "7:2318150060902162151",
+      "lastPropertyId": "6:270301621249010508",
+      "name": "Category",
+      "properties": [
+        {
+          "id": "1:6355096197913493014",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:6974840822026493455",
+          "name": "playlistId",
+          "type": 6
+        },
+        {
+          "id": "3:431249211138117482",
+          "name": "categoryId",
+          "type": 9
+        },
+        {
+          "id": "4:1326148488879503536",
+          "name": "categoryName",
+          "type": 9
+        },
+        {
+          "id": "5:7584341946887205116",
+          "name": "contentType",
+          "type": 9
+        },
+        {
+          "id": "6:270301621249010508",
+          "name": "parentId",
+          "type": 6
+        }
+      ],
+      "relations": []
     }
   ],
-  "lastEntityId": "6:7371614030397791025",
+  "lastEntityId": "7:2318150060902162151",
   "lastIndexId": "0:0",
   "lastRelationId": "0:0",
   "lastSequenceId": "0:0",
